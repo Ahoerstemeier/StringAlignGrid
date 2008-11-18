@@ -1,29 +1,34 @@
-TStringAlignGrid
+TStringAlignGrid  (Version 1.1 vom 1996-97-03)
 
 Nachkomme von TStringGrid mit der Möglichkeit, den Zelleninhalt rechts- oder
 linksbündig oder zentriert anzeigen zu lassen. Dieses kann entweder global für
 das gesamte Gitter mit der Eigenschaft Alignment geändert werden (auch im
 Objektinspektor), oder für jede Spalte mit den Feldern AlignCol und FAlignCol,
-letzteres für die festen Spalten. Die möglichen Werte dieser Eigenschaften sind
-alLeft, alRight und alCenter für links-, rechtsbündig bzw. zentriert.
+letzteres für die festen Spalten. Schließlich kann auch für jede Zelle einzeln
+der Wert über die Eigenschaft AlignCell gesetzt werden.
+Die möglichen Werte dieser Eigenschaften sind alLeft, alRight und alCenter
+für links-, rechtsbündig bzw. zentriert.
 
 Der in (F)AlignCol eingestellte Wert übertrifft den in Alignment gesetzen Wert,
-ein einmal in (F)AlignCol[spalte] eingestellter Wert kann nicht mehr
-ungesetzt werden, so daß diese Spalte wieder den Wert von Alignment benutzt
-(natürlich kann statt dessen AlignCol[spalte]:=Alignment benutzt werden].
+genauso überschreibt der in AlignCell eingestellte Wert den für die Spalte
+oder die gesamte Tabelle geltenden.
+Mit den Methoden Reset(F)AlignCol und ResetAlignCell können die Werte wieder
+ungesetzt gemacht werden, so daß wieder der Wert auf (F)AlignCol bzw.
+Alignment gültig wird.
 Wenn DefaultDrawing auf falsch gesetzt wird verhält sich diese Komponente
-genau wie ein normales StringGrid mit DefaultDrawing falsch.
-
+genau wie ein normales StringGrid mit DefaultDrawing falsch - eigentlich für
+diese Komponente unsinnig (ein Problem der Vererbung - eine einmal
+veröffentlichte Eigenschaft kann von Nachfolgern nicht mehr versteckt werden).
 
 Für Bugreports, Verbesserungsideen, Lob- and Dankesmails etc. bin ich
-zu erreichen unter:
+zu erreichen unter (neue Anschrift und email!):
 
-hoerste@hal1.physik.uni-dortmund.de
+ah@scp.de
 andy@farpoint.sauerland.de
 fido: 2:2444/4505.3
 gelbe Post: Andreas Hörstemeier
-            Oberlinweg 7
-            58675 Hemer
+            Mefferdatisstraße 16-18
+            52062 Aachen
             Deutschland
 
 Diese Komponente ist Public Domain, aber falls Sie mir dennoch Geld dafür
