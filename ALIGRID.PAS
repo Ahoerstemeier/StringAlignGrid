@@ -6,7 +6,7 @@ unit Aligrid;
   (*$d- *)   { Sorry, no debugging with Delphi 1, the unit is too complex }
 (*$endif *)
 
-{ Copyright 1995-2000 Andreas Hörstemeier            Version 2.0 2000-02-12  }
+{ Copyright 1995-2000 Andreas Hörstemeier            Version 2.2b 2000-08-21 }
 { this component is public domain - please check aligrid.hlp for             }
 { detailed info on usage and distributing                                    }
 
@@ -122,6 +122,7 @@ type
     procedure KeyDown(var Key: Word; Shift: TShiftState); override;
   (*$ifdef delphi_1 *)
     function GetGrid:TCustomGrid;
+    procedure BoundsChanged;
   (*$endif *)
     procedure UpdateContents;  (*$ifdef delphi_1 *) virtual; (*$else *) override; (*$endif *)
   public
@@ -367,13 +368,13 @@ type
     procedure ResetColorColAll;
     procedure ResetColorRowAll;
     (*@\\\0000000701*)
+  published
+    property FixedColor write SetFixedColor;
     property AlternateColorCol: TColor read f_altcolcolor write setaltcolcolor default clWindow;
     property AlternateColorRow: TColor read f_altrowcolor write setaltrowcolor default clWindow;
     property DoAlternateColorCol: boolean read f_doaltcolcolor write setdoaltcolcolor default false;
     property DoAlternateColorRow: boolean read f_doaltrowcolor write setdoaltrowcolor default false;
-  published
-    property FixedColor write SetFixedColor;
-  (*@\\\0000000A01*)
+  (*@\\\0000000901*)
   (*@/// +  Routines and variables for the selected colors *)
   protected
     (*@/// The DFM read procedures (compatibility) *)
@@ -796,12 +797,11 @@ type
     procedure DrawCell(ACol,ARow:Longint; ARect:TRect; AState:TGridDrawState); override;
     procedure DrawCellBack(ACol,ARow:Longint; var ARect:TRect; AState:TGridDrawState); virtual;
     procedure DrawCellText(ACol,ARow:Longint; var ARect:TRect; AState:TGridDrawState); virtual;
-    procedure DrawCellCombo(ACol,ARow:Longint; var ARect:TRect; AState:TGridDrawState); virtual;
   { published }
     (* Last minute access to the text parameters, maybe useful *)
     property OnDrawCellParameters: TCellDrawEvent read f_ondrawcellpar write f_ondrawcellpar;
     procedure Paint;  override;
-  (*@\\\0000000A01*)
+  (*@\\\0000000601*)
   (*@/// +  Clicks on the fixed columns/rows *)
   protected
     f_fixedcolclick: TColEvent;
@@ -833,12 +833,8 @@ type
     property PasteEditableOnly: boolean read F_PasteEditableOnly write F_PasteEditableOnly;
     property AllowCutnPaste: boolean read f_cutnpaste write f_cutnpaste;
   (*@\\\000000090C*)
-  (*@/// !  Comboboxes *)
-  protected
-    function CellHasCombobox(ACol,ARow:longint):boolean;
-  (*@\\\*)
     end;
-  (*@\\\0000000F01*)
+  (*@\\\0000000701*)
 
 (*@/// Internal routines and objects, just put here to let the be used by aligredi too *)
 type
@@ -870,7 +866,7 @@ function ReadFont(Reader: TReader):TFont;
 procedure WriteBrush(Writer: TWriter; v:TBrush);
 function ReadBrush(Reader: TReader):TBrush;
 (*@\\\0000000201*)
-(*@\\\0000002202*)
+(*@\\\0000002102*)
 (*@/// implementation *)
 implementation
 
@@ -958,9 +954,9 @@ begin
 { The WriteSet is also missing, again only savable as an integer }
   t:=v.Style;
 { and why can't I cast a set to an integer directly ? }
-  Writer.WriteInteger(cardinal(pointer(@t)^));
+  Writer.WriteInteger(integer(pointer(@t)^));
   end;
-(*@\\\0000000C0B*)
+(*@\\\0030001817001817001803*)
 (*@/// function ReadFont(Reader: TReader):TFont; *)
 function ReadFont(Reader: TReader):TFont;
 var
@@ -1006,7 +1002,7 @@ begin
     end;
   end;
 (*@\\\0000000B09*)
-(*@\\\*)
+(*@\\\0000000C01*)
 
 (*@/// TCellProperties      = class(TObject) *)
 const
@@ -1208,10 +1204,10 @@ begin
     writer.writeinteger(prop_selFont);
     WriteFont(writer,self.selFont);
     end;
-  (*@\\\*)
+  (*@\\\0000000303*)
   writer.writeinteger(prop_end);
   end;
-(*@\\\0000000B01*)
+(*@\\\0000000901*)
 (*@/// procedure TCellProperties.ReadFromReader(Reader:TReader; grid:TStringAlignGrid); *)
 procedure TCellProperties.ReadFromReader(Reader:TReader; grid:TStringAlignGrid);
 var
@@ -1285,7 +1281,7 @@ begin
     end;
   end;
 (*@\\\0000000E01*)
-(*@\\\0000001501*)
+(*@\\\0000001901*)
 
 (*@/// TMyFont              = class(TFont)            // To remember if changed *)
 { TMyFont }
@@ -1383,15 +1379,15 @@ procedure TNewInplaceEdit.UpdateContents;
 var
   g: TStringAlignGrid;
 begin
+  g:=grid as TStringAlignGrid;
 (*$ifdef delphi_1 *)
   Text := '';
-  EditMask := Grid.GetEditMask(Grid.Col, Grid.Row);
-  Text := Grid.GetEditText(Grid.Col, Grid.Row);
-  MaxLength := Grid.GetEditLimit;
+  EditMask := g.GetEditMask(g.Col, g.Row);
+  Text := g.GetEditText(g.Col, g.Row);
+  MaxLength := g.GetEditLimit;
 (*$else *)
   inherited UpdateContents;
 (*$endif *)
-  g:=grid as TStringAlignGrid;
   Col:=g.Col;
   Row:=g.Row;
   Alignment:=G.GetAlignCell(Col,Row);
@@ -1411,6 +1407,15 @@ begin
   result:=parent as TCustomGrid;
   end;
 (*@\\\0000000119*)
+(*@/// procedure TNewInplaceEdit.BoundsChanged; *)
+procedure TNewInplaceEdit.BoundsChanged;
+var
+  R: TRect;
+begin
+  R := Rect(2, 2, Width - 2, Height-2);
+  SendMessage(Handle, EM_SETRECTNP, 0, LongInt(@R));
+  end;
+(*@\\\*)
 (*$endif *)
 (*@/// procedure TNewInplaceEdit.WMWindowPosChanged(var Message: TMessage); *)
 procedure TNewInplaceEdit.WMWindowPosChanged(var Message: TMessage);
@@ -1424,7 +1429,7 @@ begin
   inherited;
   end;
 (*@\\\*)
-(*@\\\000C00071B00072900071B*)
+(*@\\\0000000A01*)
 (*@/// TStringAlignGrid     = class(TStringGrid)      // The grid itself *)
 { TStringAlignGrid }
 (*@/// The component action: create, initialize, destroy the internal data *)
@@ -2670,7 +2675,7 @@ begin
   invalidate;
   end;
 (*@\\\000000070E*)
-(*@\\\0000000701*)
+(*@\\\*)
 (*@/// Property read and write and reset for Brushs *)
 (*@/// Property read and write for BrushCell *)
 (*@/// function TStringAlignGrid.GetBrushCell(ACol,ARow: longint):TBrush; *)
@@ -4147,6 +4152,7 @@ var
   HintPos:TRect;
 begin
   if (hintinfo.hintcontrol=self) and FShowCellHints then begin
+    canshow:=true;
     self.mousetocell(hintinfo.cursorpos.x,hintinfo.cursorpos.y,col,row);
     FHintCellLast:=Point(col,row);
     hintpos:=self.Cellrect(col,row);
@@ -4156,9 +4162,13 @@ begin
     hintstr:=HintCell[col,row];
     if assigned(FOnShowHintCell) then
       FOnShowHintCell(self,col,row,HintStr,CanShow,HintInfo);
-    end;
+    end
+  else if ShowHint and (Hint<>'') then
+    canshow:=true
+  else
+    canshow:=false;
   end;
-(*@\\\000000101C*)
+(*@\\\0002001407001407*)
 (*@/// procedure TStringAlignGrid.MouseMove(Shift: TShiftState; X, Y: Integer); *)
 procedure TStringAlignGrid.MouseMove(Shift: TShiftState; X, Y: Integer);
 var
@@ -4186,7 +4196,7 @@ begin
   else
     message.result:=1;
   end;
-(*@\\\0000000901*)
+(*@\\\0000000511*)
 (*$endif *)
 (*@\\\*)
 (*@/// The Inplace-Editor which also gets the alignment, font and color *)
@@ -4230,7 +4240,8 @@ begin
 
 (*$ifdef delphi_1 *)
     { Set the color, font, alignment to the edit - since D2 done by inherited }
-    TNewInplaceEditor(InplaceEditor).UpdateContents;
+    if edit<>NIL then
+      edit.UpdateContents;
 (*$endif *)
 
     { If new edit is touched first time: save old text (for cancel)
@@ -4257,7 +4268,7 @@ begin
     EditorMode:=false; (* otherwise the grid thinks the editor is visible *)
     end;
   end;
-(*@\\\0030001B01001C01*)
+(*@\\\0000001C03*)
 
 (*@/// procedure TStringAlignGrid.ShowEdit; *)
 procedure TStringAlignGrid.ShowEdit;
@@ -4320,12 +4331,13 @@ begin
 (*@/// procedure TStringAlignGrid.WMCommand(var Message: TWMCommand); *)
 procedure TStringAlignGrid.WMCommand(var Message: TWMCommand);
 begin
-  with Message do begin
+{  with Message do begin
     if (InplaceEditor <> nil) and (Ctl = InplaceEditor.Handle) then
       case NotifyCode of
-        EN_CHANGE: UpdateText_;
+        EN_CHANGE:  UpdateText_;
         end;
-    end;
+    end; }
+  inherited;
   end;
 (*@\\\0000000614*)
 (*@/// procedure TStringAlignGrid.UpdateText_; *)
@@ -6090,7 +6102,6 @@ begin
 procedure TStringAlignGrid.MouseDown(Button:TMouseButton; Shift:TShiftState; X,Y:Integer);
 var
   ACol,ARow: longint;
-  r: TRect;
 begin
   if ((x>=0) or (y>=0)) and (button=mbLeft) then begin
     mousetocell(x,y,ACol,ARow);
@@ -6100,18 +6111,10 @@ begin
       f_fixedrowclick(Self,ARow)
     else if (ARow<FixedRows) and assigned(f_fixedcolclick) then
       f_fixedcolclick(Self,ACol);
-    if CellHasCombobox(ACol,ARow) then begin
-      r:=CellRect(ACol,ARow);
-      if (x>=r.left) and (x<=r.right) and (y>=r.top) and (y<=r.bottom) then begin
-        Col:=ACol;
-        Row:=ARow;
-        ShowEditor;
-        end;
-      end;
     end;
   inherited MouseDown(Button,Shift,X,Y);
   end;
-(*@\\\000000140D*)
+(*@\\\0000000E01*)
 
 (*@/// procedure TStringAlignGrid.ColWidthsChanged; *)
 procedure TStringAlignGrid.ColWidthsChanged;
@@ -6276,7 +6279,7 @@ begin
   invalidate;
   end;
 (*@\\\*)
-(*@\\\0000001C2A*)
+(*@\\\0000001E3A*)
 (*@/// Allow the scrollbar to act immidiatly *)
 (* Idea taken from "The Delphi Magazine", Issue 40, December 1998, pg. 59 *)
 (*@/// procedure TStringAlignGrid.WMHScroll(var Msg:TWMHScroll); *)
@@ -6310,16 +6313,6 @@ begin
 (*@\\\*)
 (*@\\\*)
 
-(*@/// Comboboxes *)
-(*@/// ! function TStringAlignGrid.CellHasCombobox(ACol,ARow:longint):boolean; *)
-function TStringAlignGrid.CellHasCombobox(ACol,ARow:longint):boolean;
-begin
-{   result:=(ACol+ARow) mod 3 =0; }
-  result:=false;
-  end;
-(*@\\\0002000411000411*)
-(*@\\\4000000148000148*)
-
 (*@/// The real action - the draw of a cell *)
 { the draw of a cell, is called from the Paint Method of TCustomGrid }
 
@@ -6328,6 +6321,7 @@ procedure TStringAlignGrid.DrawCellBack(ACol, ARow: Longint; var ARect: TRect;
   AState: TGridDrawState);
 var
   TopColor, BottomColor: TColor;
+  h: TBrush;
 (*@/// procedure AdjustColors(Bevel: TPanelBevel); *)
 procedure AdjustColors(Bevel: TPanelBevel);
 begin
@@ -6337,10 +6331,35 @@ begin
   if Bevel = bvLowered then BottomColor := clBtnHighlight;
   end;
 (*@\\\0000000401*)
+(*@/// procedure ApplyAlternateColor; *)
+{ Process AlternateColorCol and AlternateColorRow }
+procedure ApplyAlternateColor;
+begin
+  if Col_before_Row then begin
+    if f_doaltrowcolor then
+      if ((ARow-TopRow) and 1)=1 then
+        self.canvas.brush.color:=f_altrowcolor;
+    if f_doaltcolcolor then
+      if ((ACol-LeftCol) and 1)=1 then
+        self.canvas.brush.color:=f_altcolcolor;
+    end
+  else begin
+    if f_doaltcolcolor then
+      if ((ACol-LeftCol) and 1)=1 then
+        self.canvas.brush.color:=f_altcolcolor;
+    if f_doaltrowcolor then
+      if ((ARow-TopRow) and 1)=1 then
+        self.canvas.brush.color:=f_altrowcolor;
+    end;
+  end;
+(*@\\\000000021E*)
 begin
   self.canvas.font:=GetFontCellComplete(ACol,ARow);
-  self.canvas.brush:=GetBrushCellComplete(ACol,ARow);
-  Arect:=Arect;
+  h:=GetBrushCellComplete(ACol,ARow);
+  self.canvas.brush:=h;
+
+  if h=self.brush then
+    ApplyAlternateColor;
 
   if f_drawselect and ((gdSelected in AState) and (not (gdFocused in AState) or
        ([goDrawFocusSelected, goRowSelect] * Options <> []))) then begin
@@ -6366,44 +6385,7 @@ begin
     SetBkMode(Canvas.Handle,transparent);
     end;
   end;
-(*@\\\0000000715*)
-(*@/// procedure TStringAlignGrid.DrawCellCombo(ACol, ARow: Longint; var ARect: TRect; *)
-procedure TStringAlignGrid.DrawCellCombo(ACol, ARow: Longint; var ARect: TRect;
-  AState: TGridDrawState);
-var
-  h,w,l: integer;
-  r: TRect;
-  active: boolean;
-begin
-  r:=rect(ARect.Right-ComboDropDownWidth,ARect.Top,ARect.right,ARect.bottom);
-  Canvas.Brush.Color:=clBtnFace;
-  Canvas.FillRect(r);
-  Frame3D(self.Canvas,R,cl3dLight,cl3dDkShadow,1);
-  Frame3D(self.Canvas,R,clBtnHighlight,clBtnShadow,1);
-  h:=(ARect.bottom-ARect.top) div 2;
-  w:=(ComboDropDownWidth div 2);
-  l:=ARect.Right-ComboDropDownWidth;
-  active:=self.enabled and EditCell[ACol,ARow];
-  if active then begin
-    Canvas.Brush.Color:=clBtnText;
-    Canvas.Pen.Color:=clBtnText;
-    end
-  else begin
-    Canvas.Brush.Color:=clBtnHighlight;
-    Canvas.Pen.Color:=clBtnHighlight;
-    Canvas.PolyGon([Point(l+w-4+2,ARect.Top+h-2+1),
-                    Point(l+w+2+2,ARect.Top+h-2+1),
-                    Point(l+w-1+2,ARect.Top+h+1+1)]);
-    Canvas.Brush.Color:=clBtnShadow;
-    Canvas.Pen.Color:=clBtnShadow;
-    end;
-  Canvas.PolyGon([Point(l+w-4,ARect.Top+h-2),
-                  Point(l+w+2,ARect.Top+h-2),
-                  Point(l+w-1,ARect.Top+h+1)]);
-  Dec(ARect.right,ComboDropDownWidth);
-
-  end;
-(*@\\\*)
+(*@\\\000C00070B00071E*)
 (*@/// procedure TStringAlignGrid.DrawCellText(ACol, ARow: Longint; var ARect: TRect; *)
 procedure TStringAlignGrid.DrawCellText(ACol, ARow: Longint; var ARect: TRect;
   AState: TGridDrawState);
@@ -6438,24 +6420,31 @@ begin
     DrawText(canvas.handle,PChar(@s[1]),length(s)-1,Arect,flags);
     end;
   end;
-(*@\\\0000002107*)
+(*@\\\0000000301*)
 (*@/// procedure TStringAlignGrid.DrawCell(ACol, ARow: Longint; ARect: TRect; *)
 procedure TStringAlignGrid.DrawCell(ACol, ARow: Longint; ARect: TRect;
   AState: TGridDrawState);
 var
   temp: TDrawCellEvent;
+  save_brush: TBrush;
 begin
-  if (not (gdFixed in AState)) and CellHasCombobox(ACol,ARow) then
-    DrawCellCombo(ACol,ARow,ARect,AState);
-  { The Defaultdrawing is parsed in there }
-  DrawCellBack(ACol,ARow,ARect,AState);
-  DrawCellText(ACol,ARow,ARect,AState);
-  { Delphi 1 doesn't understand a Assigned(OnDrawCell), but this way it
-    works with all versions }
-  temp:=OnDrawCell;
-  if Assigned(temp) then OnDrawCell(Self, ACol, ARow, ARect, AState);
+  save_brush:=NIL;
+  try
+    save_brush:=TBrush.create;
+    save_brush.assign(canvas.brush);
+    { The Defaultdrawing is parsed in there }
+    DrawCellBack(ACol,ARow,ARect,AState);
+    DrawCellText(ACol,ARow,ARect,AState);
+    { Delphi 1 doesn't understand a Assigned(OnDrawCell), but this way it
+      works with all versions }
+    temp:=OnDrawCell;
+    if Assigned(temp) then OnDrawCell(Self, ACol, ARow, ARect, AState);
+    canvas.brush:=save_brush;
+  finally
+    save_brush.free;
+    end;
   end;
-(*@\\\0000000623*)
+(*@\\\0000000201*)
 
 (*@/// procedure TStringAlignGrid.CalcTextSize(ACol,ARow:longint; var Width,height: integer); *)
 procedure TStringAlignGrid.CalcTextSize(ACol,ARow:longint; var Width,height: integer);
@@ -6499,25 +6488,25 @@ begin
 
 (*@/// procedure TStringAlignGrid.Paint; *)
 procedure TStringAlignGrid.Paint;
-var
-  R: TRect;
+{ var }
+{   R: TRect; }
 begin
   inherited Paint;
-  if DefaultDrawing and not (csDesigning in ComponentState) and
-    (ValidParentForm(Self).ActiveControl = Self) and
-    ([goEditing, goAlwaysShowEditor] * Options <>
-    [goEditing, goAlwaysShowEditor])
-    and (not (goRowSelect in Options))
-    and CellHasCombobox(Col,Row) then begin
-    r:=CellRect(Col,Row);
-    DrawFocusRect(Canvas.Handle,r);
-    dec(r.right,ComboDropDownWidth);
-    DrawFocusRect(Canvas.Handle,r);
-    end;
+{   if DefaultDrawing and not (csDesigning in ComponentState) and }
+{     (ValidParentForm(Self).ActiveControl = Self) and }
+{     ([goEditing, goAlwaysShowEditor] * Options <> }
+{     [goEditing, goAlwaysShowEditor]) }
+{     and (not (goRowSelect in Options)) }
+{     and CellHasCombobox(Col,Row) then begin }
+{     r:=CellRect(Col,Row); }
+{     DrawFocusRect(Canvas.Handle,r); }
+{     dec(r.right,ComboDropDownWidth); }
+{     DrawFocusRect(Canvas.Handle,r); }
+{     end; }
   end;
-(*@\\\0000000F01*)
+(*@\\\0000000401*)
 (*@\\\0000000301*)
-(*@\\\0000002001*)
+(*@\\\4000002001001801*)
 (*@\\\0000001401*)
 (*$ifdef delphi_ge_2 *) (*$warnings off *) (*$endif *)
 end.
@@ -6539,4 +6528,41 @@ grid.wmkillfocus: focused(inplacedit.handle)
 grid.setfocus: focused(inplacedit.handle)
 grid.CMCancelMode      -> einfach weiterreichen
 (*@\\\0000000A25*)
+(*@/// procedure TStringAlignGrid.DrawCellCombo(ACol, ARow: Longint; var ARect: TRect; *)
+procedure TStringAlignGrid.DrawCellCombo(ACol, ARow: Longint; var ARect: TRect;
+  AState: TGridDrawState);
+var
+  h,w,l: integer;
+  r: TRect;
+  active: boolean;
+begin
+  r:=rect(ARect.Right-ComboDropDownWidth,ARect.Top,ARect.right,ARect.bottom);
+  Canvas.Brush.Color:=clBtnFace;
+  Canvas.FillRect(r);
+  Frame3D(self.Canvas,R,cl3dLight,cl3dDkShadow,1);
+  Frame3D(self.Canvas,R,clBtnHighlight,clBtnShadow,1);
+  h:=(ARect.bottom-ARect.top) div 2;
+  w:=(ComboDropDownWidth div 2);
+  l:=ARect.Right-ComboDropDownWidth;
+  active:=self.enabled and EditCell[ACol,ARow];
+  if active then begin
+    Canvas.Brush.Color:=clBtnText;
+    Canvas.Pen.Color:=clBtnText;
+    end
+  else begin
+    Canvas.Brush.Color:=clBtnHighlight;
+    Canvas.Pen.Color:=clBtnHighlight;
+    Canvas.PolyGon([Point(l+w-4+2,ARect.Top+h-2+1),
+                    Point(l+w+2+2,ARect.Top+h-2+1),
+                    Point(l+w-1+2,ARect.Top+h+1+1)]);
+    Canvas.Brush.Color:=clBtnShadow;
+    Canvas.Pen.Color:=clBtnShadow;
+    end;
+  Canvas.PolyGon([Point(l+w-4,ARect.Top+h-2),
+                  Point(l+w+2,ARect.Top+h-2),
+                  Point(l+w-1,ARect.Top+h+1)]);
+  Dec(ARect.right,ComboDropDownWidth);
+
+  end;
+(*@\\\*)
 (*@\\\0001000011000E01*)

@@ -46,6 +46,8 @@ begin
   RegisterPropertiesInCategory(TVisualCategory, TStringAlignGrid,
     ['Alignment','Wordwrap','FixedColor','RedrawWhileScroll',
      'DrawSelection','AutoAdjustLastCol','SelectedCellColor',
+     'AlternateColorCol', 'AlternateColorRow',
+     'DoAlternateColorCol', 'DoAlternateColorRow',
      'SelectedFontColor']);
   RegisterPropertiesInCategory(TLocalizableCategory, TStringAlignGrid,
     ['HTMLCaption']);
@@ -58,7 +60,7 @@ begin
      'NextCellTab','AfterLastCellTab']);
 (*$endif *)
   end;
-(*@\\\003E000C01000C01000D07000D18000701000701*)
+(*@\\\003E00180100180100171E001731001801001801*)
 (*@\\\0000000901*)
 end.
 (*@\\\0001000011000401*)
