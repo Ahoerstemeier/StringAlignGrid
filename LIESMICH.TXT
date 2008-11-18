@@ -1,4 +1,4 @@
-TStringAlignGrid  (Version 1.6 vom 1997-08-20)
+TStringAlignGrid  (Version 1.7 vom 1997-11-xx)
 
 Sorry, aus Zeitmangel ist die deutsche Doku nicht mehr up-to-date, also für
 die letzten Aenderungen die englische Doku benutzen...

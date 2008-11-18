@@ -36,10 +36,9 @@ History of the TStringAlignGrid
                  caused problems in Delphi 3 as AddExitProc won't work
                  properly with packages - now fixed
                  now doesn't let the IDE hints disappear anymore
-
-Maybe in the next version
-                 sorting of rows
-                 import and export to ClipBoard
-                 word wrap
-                 vertically alignments
-                 text rotated by 90 degrees
+1997-12-07  1.7  some bugs regarding the InPlaceEdit fixed
+                 Sorting of Rows/Columns
+                 import and export to Clipboard
+                 added AdjustColWidth/Rowheight procedures
+                 made the AutoEditNextCell and the goTabs option much more
+                 flexible

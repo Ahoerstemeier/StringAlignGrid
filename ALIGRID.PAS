@@ -1,7 +1,8 @@
 unit Aligrid;
-(*$p+t+ *) { These are needed, especially the p must be the same as in forms }
+(*$p+,t+,x+*)
+  { These are needed, especially the p must be the same as in forms }
 
-{ Copyright 1995/97 Andreas Hörstemeier            Version 1.6 1997-09-10    }
+{ Copyright 1995/97 Andreas Hörstemeier            Version 1.7 1997-12-07    }
 { this component is public domain - please check the file readme.txt for     }
 { more detailed info on usage and distributing                               }
 
@@ -33,17 +34,25 @@ uses
   dsgnintf,
   stdctrls,
   menus;
-(*@\\\0000000801*)
+(*@\\\*)
 
 const
+(*@///   control messages from and to the inplace edit *)
   cn_edit_cancel= wm_user+2000;  (* edit finished with ESC *)
   cn_edit_return= wm_user+2001;  (* edit finished with return *)
   cn_edit_exit  = wm_user+2002;  (* edit finished otherwise (cursor) *)
   cn_edit_show  = wm_user+2003;  (* edit is about to be shown *)
+  cn_edit_toshow= wm_user+2004;  (* internal: show the editor *)
+(*@\\\000C000101000541*)
 
 type
   TMyAlign=(alRight,alLeft,alCenter);
+  T_nextcell=(nc_rightdown, nc_downright, nc_leftdown, nc_downleft,
+              nc_leftup,    nc_upleft,    nc_rightup,  nc_upright);
+  t_lastcell=(lc_newcolrow, lc_stop, lc_first);
   TCellEvent = procedure (Sender:TObject; col,row:integer) of object;
+  t_relation = (rel_greater, rel_equal, rel_less);
+  TCompareFunction = function(Sender:TObject; colrow,compare1,compare2:longint):t_relation of object;
 (*@///   TNewInplaceEdit = class(TInplaceEdit) *)
 TNewInplaceEdit = class(TInplaceEdit)
 private
@@ -63,7 +72,6 @@ public
   constructor Create(AOwner:TComponent); override;
 (*$endif *)
   property Alignment: TMyAlign read FAlignment write SetAlignment;
-  property Passwordchar;
 end;
 (*@\\\*)
 (*@///   TStringAlignGrid=class(TStringGrid) *)
@@ -74,7 +82,7 @@ protected
 public
   constructor Create(AOwner: TComponent); override;
   destructor Destroy; override;
-(*@\\\000000041E*)
+(*@\\\*)
 (*@///   Routines and variables for the alignments *)
 protected
   FAlign: TMyAlign;
@@ -103,7 +111,7 @@ procedure ReadFixedAlignCol(Stream: TStream);
 procedure WriteFixedAlignCol(Stream: TStream);
 procedure ReadFixedAlignRow(Stream: TStream);
 procedure WriteFixedAlignRow(Stream: TStream);
-(*@\\\0000000925*)
+(*@\\\*)
 (*@///   property read/write for the alignments *)
 function GetAlign: TMyAlign;
 procedure SetAlign(const Value: TMyAlign);
@@ -120,7 +128,7 @@ procedure SetFixAlignRow(ARow:integer; const Value: TMyAlign);
 
 function GetAlignCell(ACol,ARow: integer):TMyAlign;
 procedure SetAlignCell(ACol,ARow: integer; const Value: TMyAlign);
-(*@\\\0000000201*)
+(*@\\\*)
   function ReadAlignColRow(Stream: TStream; list:TList):boolean;
   procedure WriteAlignColRow(Stream: TStream; count: integer; list:TList);
 public
@@ -141,7 +149,7 @@ procedure ResetAlignFixedRow(ARow:integer);
 (*@\\\*)
 published
   property Alignment: TMyAlign read GetAlign write SetAlign default alLeft;
-(*@\\\0000000201*)
+(*@\\\*)
 (*@///   Routines and variables for the edit-enabled *)
 protected
   FEditable: boolean;   { allow switching on editing for single objects only }
@@ -167,7 +175,7 @@ procedure WriteEditRow(Stream: TStream);
 { Utility functions }
 function ReadEditColRow(Stream: TStream; list:TList):boolean;
 procedure WriteEditColRow(Stream: TStream; count: integer; list:TList);
-(*@\\\000000062A*)
+(*@\\\*)
 (*@///   property read/write for the edit-enabled *)
 function GetEditCol(ACol: integer):Boolean;
 procedure SetEditCol(ACol: integer; const Value: Boolean);
@@ -191,7 +199,7 @@ procedure ResetEditRow(ARow:integer);
 (*@\\\*)
 published
   property Editable:boolean read FEditable write FEditable default true;
-(*@\\\0000000303*)
+(*@\\\*)
 (*@///   Routines and variables for the colors *)
 protected
 (*@///   The DFM read/write procedures *)
@@ -248,7 +256,7 @@ FSelColorCell: TList;
 FSaveSelColorCell: Boolean;
 FSaveSelColorCol: Boolean;
 FSaveSelColorRow: Boolean;
-(*@\\\0000000106*)
+(*@\\\*)
 (*@///   The DFM read/write procedures *)
 procedure ReadSelColorCell(Reader: TReader);
 procedure ReadSelColorCol(Reader: TReader);
@@ -259,7 +267,7 @@ procedure WriteSelColorRow(Writer: TWriter);
 
 function ReadSelColorColRow(Reader: TReader; list:TList):boolean;
 procedure WriteSelColorColRow(Writer: TWriter; count:integer; list:TList);
-(*@\\\0000000841*)
+(*@\\\*)
 (*@///   property read/write for the colors *)
 function GetSelColorCol(ACol: integer):TColor;
 procedure SetSelColorCol(ACol: integer; const Value: TColor);
@@ -269,31 +277,31 @@ procedure SetSelColorRow(ARow:integer; const Value: TColor);
 
 function GetSelColorCell(ACol,ARow: integer):TColor;
 procedure SetSelColorCell(ACol,ARow: integer; const Value: TColor);
-(*@\\\000000012E*)
+(*@\\\*)
 public
 (*@///   property ColorCell/ColorCol/FixColorCol/ColorRow/FixColorRow *)
 property SelectedColorCell[ACol,ARow:integer]: TColor read GetSelColorCell write SetSelColorCell;
 property SelectedColorCol[ACol:integer]: TColor read GetSelColorCol write SetSelColorCol;
 property SelectedColorRow[ARow:integer]: TColor read GetSelColorRow write SetSelColorRow;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@///   procedure ResetColor...; *)
 procedure ResetSelectedColorCell(ACol,ARow:integer);
 procedure ResetSelectedColorCol(ACol:integer);
 procedure ResetSelectedColorRow(ARow:integer);
-(*@\\\0000000301*)
-(*@\\\0000000201*)
+(*@\\\*)
+(*@\\\*)
 (*@///   Routines and variables for the selected font colors *)
 protected
 (*@///   The lists *)
 FSelFontColorCol: TList;
 FSelFontColorRow: TList;
 FSelFontColorCell: TList;
-(*@\\\0000000105*)
+(*@\\\*)
 (*@///   The save flags *)
 FSaveSelFontColorCell: Boolean;
 FSaveSelFontColorCol: Boolean;
 FSaveSelFontColorRow: Boolean;
-(*@\\\0000000109*)
+(*@\\\*)
 (*@///   The DFM read/write procedures *)
 procedure ReadSelFontColorCell(Reader: TReader);
 procedure ReadSelFontColorCol(Reader: TReader);
@@ -301,7 +309,7 @@ procedure ReadSelFontColorRow(Reader: TReader);
 procedure WriteSelFontColorCell(Writer: TWriter);
 procedure WriteSelFontColorCol(Writer: TWriter);
 procedure WriteSelFontColorRow(Writer: TWriter);
-(*@\\\0000000631*)
+(*@\\\*)
 (*@///   property read/write for the colors *)
 function GetSelFontColorCol(ACol: integer):TColor;
 procedure SetSelFontColorCol(ACol: integer; const Value: TColor);
@@ -311,19 +319,19 @@ procedure SetSelFontColorRow(ARow:integer; const Value: TColor);
 
 function GetSelFontColorCell(ACol,ARow: integer):TColor;
 procedure SetSelFontColorCell(ACol,ARow: integer; const Value: TColor);
-(*@\\\0000000848*)
+(*@\\\*)
 public
 (*@///   property ColorCell/ColorCol/FixColorCol/ColorRow/FixColorRow *)
 property SelectedFontColorCell[ACol,ARow:integer]: TColor read GetSelFontColorCell write SetSelFontColorCell;
 property SelectedFontColorCol[ACol:integer]: TColor read GetSelFontColorCol write SetSelFontColorCol;
 property SelectedFontColorRow[ARow:integer]: TColor read GetSelFontColorRow write SetSelFontColorRow;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@///   procedure ResetColor...; *)
 procedure ResetSelectedFontColorCell(ACol,ARow:integer);
 procedure ResetSelectedFontColorCol(ACol:integer);
 procedure ResetSelectedFontColorRow(ARow:integer);
 (*@\\\*)
-(*@\\\0000000201*)
+(*@\\\*)
 (*@///   Routines and variables for the hints *)
 protected
   FHintCellLast: TPoint;
@@ -340,7 +348,7 @@ public
   property HintCell[ACol,ARow:integer]:string read GetHintCell write SetHintCell;
 published
   property ShowCellHints: boolean read FShowCellHints write FShowCellHints default true;
-(*@\\\0000000B01*)
+(*@\\\*)
 (*@///   Routines and variables for the cells itself *)
 protected
   FCell: TList;        { Only for loading and saving the cells property }
@@ -420,7 +428,7 @@ procedure ResetFontFixedCol(ACol:integer);
 procedure ResetFontRow(ARow:integer);
 procedure ResetFontFixedRow(ARow:integer);
 (*@\\\*)
-(*@\\\0000000401*)
+(*@\\\*)
 (*@///   Routines and variables for the brushs *)
 protected
 (*@///   The lists *)
@@ -430,7 +438,7 @@ FFBrushCol: TList;
 FFBrushRow: TList;
 FBrushCell: TList;
 FFixedBrush: TBrush;
-(*@\\\0000000601*)
+(*@\\\*)
 (*@///   The save flags *)
 FSaveBrushCell: Boolean;
 FSaveBrushCol: Boolean;
@@ -471,7 +479,7 @@ procedure SetBrushRow(ARow: integer; const Value: TBrush);
 function GetBrushFixedRow(ARow: integer):TBrush;
 procedure SetBrushFixedRow(ARow: integer; const Value: TBrush);
 function GetBrushColRowInternal(AColRow: integer; create:boolean; List:TList):TBrush;
-(*@\\\0000000C01*)
+(*@\\\*)
 (*@///   utility functions *)
 function GetBrushCellComplete(ACol,ARow: integer):TBrush;
 function GetBrushCellInternal(ACol,ARow: integer; create:boolean):TBrush;
@@ -493,10 +501,21 @@ procedure ResetBrushFixedCol(ACol:integer);
 procedure ResetBrushRow(ARow:integer);
 procedure ResetBrushFixedRow(ARow:integer);
 (*@\\\*)
-(*@\\\0000000201*)
+(*@\\\*)
+(*@///   The ResetAll methods as shortcuts *)
+public
+  procedure ResetAllCell(ACol,ARow:integer);
+  procedure ResetAllCol(ACol:integer);
+  procedure ResetAllFixedCol(ACol:integer);
+  procedure ResetAllRow(ARow:integer);
+  procedure ResetAllFixedRow(ARow:integer);
+(*@\\\*)
 (*@///   The Inplace-Edit and it's events sent to the grid *)
 protected
   edit_visible: boolean;
+  f_reshow_edit: boolean;
+  f_last_sel_pos: integer;
+  f_last_sel_len: integer;
   f_on_after_edit: TCellEvent;
   f_on_cancel_edit: TCellEvent;
   f_on_before_edit: TCellEvent;
@@ -506,7 +525,9 @@ protected
   procedure mcn_edit_cancel(var msg:TMessage); message cn_edit_cancel;
   procedure mcn_edit_exit(var msg:TMessage); message cn_edit_exit;
   procedure mcn_edit_show(var msg:TMessage); message cn_edit_show;
+  procedure mcn_edit_show_it(var msg:TMessage); message cn_edit_toshow;
   procedure doExit; override;
+  procedure doEnter; override;
 public
   procedure ShowEdit;
   procedure HideEdit(cancel:boolean);
@@ -515,7 +536,7 @@ published
   property OnCancelEdit: TCellEvent read f_on_cancel_edit write f_on_cancel_edit;
   property OnBeforeEdit: TCellEvent read f_on_before_edit write f_on_before_edit;
 (*@\\\*)
-(*@///   Insertion and removing and moving of columns and rows *)
+(*@///   Insertion and removing and moving and exchanging of columns and rows *)
 protected
   procedure RowMoved(FromIndex, ToIndex: Longint); override;
   procedure ColumnMoved(FromIndex, ToIndex: Longint); override;
@@ -524,27 +545,39 @@ public
   procedure RemoveRow(ARow:Integer);
   procedure InsertCol(ACol:Integer);
   procedure InsertRow(ARow:Integer);
-(*@\\\000000010A*)
+  procedure ExchangeRow(FromIndex, ToIndex: Longint);
+  procedure ExchangeCol(FromIndex, ToIndex: Longint);
+(*@\\\*)
 (*@///   Import and export functions *)
 public
   function Contents2HTML(data:TMemorystream):TMemorystream;
   function Contents2CSV(data:TMemorystream; csv:char; range:TGridRect):TMemorystream;
   procedure CSV2Contents(data:TStream; csv:char; range:TGridRect);
+  procedure Contents2CSVClipboard(csv:char; range:TGridRect);
+  procedure ClipboardCSV2Contents(csv:char; range:TGridRect);
   procedure SaveToFile(const filename:string);
   procedure LoadFromFile(const filename:string);
-(*@\\\0000000631*)
-(*@///   Miscellaneous stuff *)
+  procedure CopyToClipboard;
+  procedure CopyFromClipboard;
+(*@\\\*)
+(*@///   Miscellaneous stuff like internal calculations etc. *)
 protected
   function is_fixed(ACol,ARow: integer):boolean;
+  procedure WMChar(var Msg: TWMChar); message WM_CHAR;
+  procedure CalcTextSize(ACol,ARow:integer; var Width,height: integer);
+  function textheight(ACol,ARow:integer):integer;
+  function textwidth(ACol,ARow:integer):integer;
+  procedure KeyDown(var Key: Word; Shift: TShiftState); override;
 public
   procedure ClearSelection;
   procedure NextEditableCell(var ACol,ARow:integer);
-(*@\\\0000000201*)
+  procedure NextCell(direction:t_nextcell; LastCellBehaviour:t_lastcell; Var ACol,ARow:integer);
+(*@\\\*)
 (*@///   For the DFM read/write *)
 protected
   procedure Loaded; override;
   procedure DefineProperties(Filer: TFiler); override;
-(*@\\\000000010A*)
+(*@\\\*)
 (*@///   The other properties *)
 protected
   f_SelFontColor: TColor;
@@ -553,18 +586,58 @@ protected
   procedure SetSelFontColor(Value: TColor);
 protected
   f_nextcell: Boolean;
+  f_drawselect: boolean;
+  f_nextcell_edit, f_nextcell_tab: T_nextcell;
+  f_lastcell_edit, f_lastcell_tab: t_lastcell;
   f_fixedcols, f_fixedrows: integer;
 published
   property SelectedCellColor:TColor read f_SelCellColor write SetSelCellColor default clActiveCaption;
   property SelectedFontColor:TColor read f_SelFontColor write SetSelFontColor default clWhite;
   property AutoEditNextCell: boolean read f_nextcell write f_nextcell default false;
-(*@\\\0000000201*)
+  property NextCellEdit: T_nextcell read f_nextcell_edit write f_nextcell_edit default nc_rightdown;
+  property NextCellTab:  T_nextcell read f_nextcell_tab  write f_nextcell_tab  default nc_rightdown;
+  property AfterLastCellEdit: t_lastcell read f_lastcell_edit write f_lastcell_edit default lc_newcolrow;
+  property AfterLastCellTab:  t_lastcell read f_lastcell_tab  write f_lastcell_tab  default lc_first;
+  property DrawSelection: boolean read f_drawselect write f_drawselect default true;
+(*@\\\*)
+(*@///   Sorting *)
+private
+  f_compare_col: TCompareFunction;
+  f_compare_row: TCompareFunction;
+protected
+  procedure DoSort(ColRow,Min,Max: longint; ByColumn,ascending:boolean);
+public
+  function CompareColString(Sender: TObject; Column, Row1,Row2: longint):t_relation;
+  function CompareRowString(Sender: TObject; RowNr, Col1,Col2: longint):t_relation;
+  function CompareColInteger(Sender: TObject; Column, Row1,Row2: longint):t_relation;
+  function CompareRowInteger(Sender: TObject; RowNr, Col1,Col2: longint):t_relation;
+  procedure SortColumn(Column: longint; Ascending:boolean);
+  procedure SortRow(Rownumber: longint; Ascending:boolean);
+published
+  property OnCompareRow: TCompareFunction read f_compare_row write f_compare_row;
+  property OnCompareCol: TCompareFunction read f_compare_col write f_compare_col;
+(*@\\\*)
+(*@///   Events for col and row resizing *)
+protected
+  fwidthschanged: TNotifyEvent;
+  fheightschanged: TNotifyEvent;
+  procedure ColWidthsChanged; override;
+  procedure RowHeightsChanged; override;
+public
+  procedure AdjustRowHeight(ARow:integer);
+  procedure AdjustColWidth(ACol:integer);
+  procedure AdjustRowHeights;
+  procedure AdjustColWidths;
+published
+  property OnColWidthsChanged: TNotifyEvent read fwidthschanged write fwidthschanged;
+  property OnRowHeightsChanged: TNotifyEvent read fheightschanged write fheightschanged;
+(*@\\\*)
 (*@///   The main procedure DrawCell *)
 protected
   procedure DrawCell(ACol,ARow:Longint; ARect:TRect; AState:TGridDrawState); override;
-(*@\\\0000000201*)
+(*@\\\*)
   end;
-(*@\\\0000001101*)
+(*@\\\*)
 (*@///   TGridComponentEditor = class(TComponentEditor) *)
 TGridComponentEditor = class(TComponentEditor)
 private
@@ -586,13 +659,26 @@ public
   end;
 (*@\\\*)
 
+(*@/// Make Stream and Clipboard work together *)
+procedure Stream2Clipboard(stream:TStream; format:integer);
+procedure Clipboard2Stream(stream:TStream; format:integer);
+(*@\\\*)
+(*@/// The routines to make the applications events use a list of methods *)
 procedure AddShowHintProc(proc:TShowHintEvent);
 procedure RemoveShowHintProc(proc:TShowHintEvent);
 procedure AddIdleProc(proc:TIdleEvent);
 procedure RemoveIdleProc(proc:TIdleEvent);
+(*@\\\*)
+(*@/// Create a windows HWnd avoiding the stuff from forms *)
+type
+  TWndProc = procedure (var Message: TMessage) of object;
+
+function AH_AllocateHWnd(Method: TWndProc): HWND;
+procedure AH_DeallocateHWnd(Wnd: HWND);
+(*@\\\*)
 
 procedure Register;
-(*@\\\0030000E01000F01000E01*)
+(*@\\\0030001801001814*)
 (*@/// implementation *)
 implementation
 
@@ -642,7 +728,108 @@ begin
   stream.write(s[1],length(s));
   end;
 (*@\\\*)
-(*@\\\0000000701*)
+
+(*@/// function GetPointer(index: integer; memblock: THandle):pointer; *)
+function GetPointer(index: integer; memblock: THandle):pointer;
+(*$ifdef ver80 *)
+var
+  selector, offset: word;
+  P: pointer;
+begin
+  selector:=(index div 65536) * selectorinc + memblock;
+  offset:=(index mod 65536);
+  p:=GlobalLock(Selector);
+  result:=Ptr(selector,offset);
+  end;
+(*$else *)
+begin
+  result:=pointer(longint(GlobalLock(memblock))+index);
+  end;
+(*$endif *)
+(*@\\\*)
+(*@/// function min(x,y: longint):longint; *)
+function min(x,y: longint):longint;
+begin
+  if x<y then result:=x
+         else result:=y;
+  end;
+(*@\\\*)
+(*@/// function max(x,y: longint):longint; *)
+function max(x,y: longint):longint;
+begin
+  if x>y then result:=x
+         else result:=y;
+  end;
+(*@\\\*)
+
+(*@/// procedure Stream2Clipboard(stream:TStream; format:integer); *)
+procedure Stream2Clipboard(stream:TStream; format:integer);
+const
+  max_write = $8000;    (* must obey ($10000 mod max_write = 0) for Delphi 1 *)
+var
+  size: longint;
+  s: word;
+  curpos: longint;
+  Memblock: THandle;
+  FClipboardWindow: THandle;
+begin
+  FClipboardWindow := Application.Handle;
+  if FClipboardWindow = 0 then
+    FClipboardWindow := AllocateHWnd(NIL);
+  OpenClipboard(FClipboardWindow);
+
+  stream.seek(0,0);
+  size:=stream.size;
+  stream.seek(0,0);
+  MemBlock:=GlobalAlloc(gmem_moveable or gmem_zeroinit,size+1);
+  curpos:=0;
+  while curpos+1<size do begin
+    s:=stream.read(getPointer(curpos,MemBlock)^,min(max_write,size-curpos));
+    inc(curpos,s);
+    GlobalUnLock(MemBlock);
+    if s=0 then BREAK;
+    end;
+  char(getPointer(curpos,memblock)^):=#0;
+  GlobalUnLock(MemBlock);
+  EmptyClipBoard;
+  SetClipBoardData(format,memblock);
+
+  CloseClipboard;
+  if FClipboardWindow<>Application.Handle then
+    DeallocateHWnd(FClipboardWindow);
+  end;
+(*@\\\*)
+(*@/// procedure Clipboard2Stream(stream:TStream; format:integer); *)
+procedure Clipboard2Stream(stream:TStream; format:integer);
+const
+  max_read = $8000;   (* must obey ($10000 mod max_read = 0) for Delphi 1 *)
+var
+  size: longint;
+  curpos: longint;
+  Memblock: THandle;
+  FClipboardWindow: THandle;
+begin
+  FClipboardWindow := Application.Handle;
+  if FClipboardWindow = 0 then
+    FClipboardWindow := AllocateHWnd(NIL);
+  OpenClipboard(FClipboardWindow);
+
+  stream.seek(0,0);
+  MemBlock:=GetClipboardData(format);
+  size:=GlobalSize(Memblock);
+  curpos:=0;
+  while curpos+1<size do begin
+    stream.write(getPointer(curpos,MemBlock)^,min(max_read,size-curpos-1));
+    inc(curpos,min(max_read,size-curpos-1));
+    GlobalUnLock(MemBlock);
+    end;
+
+  CloseClipboard;
+  if FClipboardWindow<>Application.Handle then
+    DeallocateHWnd(FClipboardWindow);
+  end;
+(*@\\\0000001024*)
+(*@\\\0000000F01*)
 
 (*@/// TMyFont              = class(TFont)            // To remember if changed *)
 type
@@ -677,7 +864,7 @@ begin
   inherited changed;
   end;
 (*@\\\*)
-(*@\\\000000091C*)
+(*@\\\*)
 (*@/// TNewInplaceEdit      = class(TInplaceEdit)     // The internal cell editor *)
 (*@/// procedure TNewInplaceEdit.CreateParams(var Params: TCreateParams); *)
 procedure TNewInplaceEdit.CreateParams(var Params: TCreateParams);
@@ -690,7 +877,7 @@ begin
                                 (* but makes it behave erratically *)
     or Alignments[FAlignment];
   end;
-(*@\\\0000000901*)
+(*@\\\*)
 (*@/// procedure TNewInplaceEdit.SetAlignment(Value: TMyAlign); *)
 procedure TNewInplaceEdit.SetAlignment(Value: TMyAlign);
 begin
@@ -700,14 +887,14 @@ begin
     SetSel(0,-1);
     end;
   end;
-(*@\\\0000000701*)
+(*@\\\*)
 (*@/// constructor TNewInplaceEdit.Create(AOwner:TComponent); *)
 constructor TNewInplaceEdit.Create(AOwner:TComponent);
 begin
   inherited Create(AOwner);
   FAlignment := alLeft;
   end;
-(*@\\\0000000401*)
+(*@\\\*)
 (*@/// procedure TNewInplaceEdit.KeyPress(var Key: Char); *)
 procedure TNewInplaceEdit.KeyPress(var Key: Char);
 begin
@@ -721,8 +908,8 @@ begin
     end;
   inherited KeyPress(Key);
   end;
-(*@\\\0000000501*)
-(*@\\\000C000101000101*)
+(*@\\\*)
+(*@\\\*)
 (*@/// TStringAlignGrid     = class(TStringGrid)      // The grid itself *)
 (*@/// The component action: create, initialize, destroy the internal data *)
 { The component action: create, initialize, destroy the internal data }
@@ -756,6 +943,11 @@ begin
 
   FSaveHint:=false;
   FSaveCells:=false;
+
+  f_reshow_edit:=false;
+
+  FEditable:=true;
+
   Initialize;
   end;
 (*@\\\*)
@@ -778,11 +970,13 @@ FAlignRow:=NIL;
 (*@\\\*)
 (*@///   FAlignCell.Free; *)
 if FAlignCell<>NIL then
-  for i:=0 to FAlignCell.Count-1 do
+  for i:=0 to FAlignCell.Count-1 do begin
     cleanlist(TList(FAlignCell.Items[i]),sizeof(TMyAlign));
+    TList(FAlignCell.Items[i]).Free;
+    end;
 FAlignCell.Free;
 FAlignCell:=NIL;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@///   FFAlignCol.Free; *)
 if FFAlignCol<>NIL then
   cleanlist(FFAlignCol,sizeof(TMyAlign));
@@ -801,60 +995,66 @@ if FEditCol<>NIL then
   cleanlist(FEditCol,sizeof(boolean));
 FEditCol.Free;
 FEditCol:=NIL;
-(*@\\\0000000224*)
+(*@\\\*)
 (*@///   FEditRow.Free; *)
 if FEditRow<>NIL then
   cleanlist(FEditRow,sizeof(boolean));
 FEditRow.Free;
 FEditRow:=NIL;
-(*@\\\0000000224*)
+(*@\\\*)
 (*@///   FEditCell.Free; *)
 if FEditCell<>NIL then
-  for i:=0 to FEditCell.Count-1 do
+  for i:=0 to FEditCell.Count-1 do begin
     cleanlist(TList(FEditCell.Items[i]),sizeof(boolean));
+    TList(FEditCell.Items[i]).Free;
+    end;
 FEditCell.Free;
 FEditCell:=NIL;
-(*@\\\0000000337*)
+(*@\\\*)
 
 (*@///   FSelColorCol.Free; *)
 if FSelColorCol<>NIL then
   cleanlist(FSelColorCol,sizeof(TColor));
 FSelColorCol.Free;
 FSelColorCol:=NIL;
-(*@\\\0000000413*)
+(*@\\\*)
 (*@///   FSelColorRow.Free; *)
 if FSelColorRow<>NIL then
   cleanlist(FSelColorRow,sizeof(TColor));
 FSelColorRow.Free;
 FSelColorRow:=NIL;
-(*@\\\0000000413*)
+(*@\\\*)
 (*@///   FSelColorCell.Free; *)
 if FSelColorCell<>NIL then
-  for i:=0 to FSelColorCell.Count-1 do
+  for i:=0 to FSelColorCell.Count-1 do begin
     cleanlist(TList(FSelColorCell.Items[i]),sizeof(TColor));
+    TList(FSelColorCell.Items[i]).Free;
+    end;
 FSelColorCell.Free;
 FSelColorCell:=NIL;
-(*@\\\0000000514*)
+(*@\\\*)
 
 (*@///   FSelFontColorCol.Free; *)
 if FSelFontColorCol<>NIL then
   cleanlist(FSelFontColorCol,sizeof(TColor));
 FSelFontColorCol.Free;
 FSelFontColorCol:=NIL;
-(*@\\\0000000417*)
+(*@\\\*)
 (*@///   FSelFontColorRow.Free; *)
 if FSelFontColorRow<>NIL then
   cleanlist(FSelFontColorRow,sizeof(TColor));
 FSelFontColorRow.Free;
 FSelFontColorRow:=NIL;
-(*@\\\0000000417*)
+(*@\\\*)
 (*@///   FSelFontColorCell.Free; *)
 if FSelFontColorCell<>NIL then
-  for i:=0 to FSelFontColorCell.Count-1 do
+  for i:=0 to FSelFontColorCell.Count-1 do begin
     cleanlist(TList(FSelFontColorCell.Items[i]),sizeof(TColor));
+    TList(FSelFontColorCell.Items[i]).Free;
+    end;
 FSelFontColorCell.Free;
 FSelFontColorCell:=NIL;
-(*@\\\0000000518*)
+(*@\\\*)
 
 (*@///   FFontCol.Free; *)
 if FFontCol<>NIL then
@@ -882,8 +1082,10 @@ FFFontRow:=NIL;
 (*@\\\*)
 (*@///   FFontCell.Free; *)
 if FFontCell<>NIL then
-  for i:=0 to FFontCell.Count-1 do
+  for i:=0 to FFontCell.Count-1 do begin
     cleanlist_object(TList(FFontCell.Items[i]));
+    TList(FFontCell.Items[i]).Free;
+    end;
 FFontCell.Free;
 FFontCell:=NIL;
 (*@\\\*)
@@ -914,23 +1116,29 @@ FFBrushRow:=NIL;
 (*@\\\*)
 (*@///   FBrushCell.Free; *)
 if FBrushCell<>NIL then
-  for i:=0 to FBrushCell.Count-1 do
+  for i:=0 to FBrushCell.Count-1 do begin
     cleanlist_object(TList(FBrushCell.Items[i]));
+    TList(FBrushCell.Items[i]).Free;
+    end;
 FBrushCell.Free;
 FBrushCell:=NIL;
 (*@\\\*)
 
 (*@///   FHintCell.Free; *)
 if FHintCell<>NIL then
-  for i:=0 to FHintCell.Count-1 do
+  for i:=0 to FHintCell.Count-1 do begin
     cleanlist_pstring(TList(FHintCell.Items[i]));
+    TList(FHintCell.Items[i]).Free;
+    end;
 FHintCell.Free;
 FHintCell:=NIL;
 (*@\\\*)
 (*@///   FCell.Free; *)
 if FCell<>NIL then
-  for i:=0 to FCell.Count-1 do
+  for i:=0 to FCell.Count-1 do begin
     cleanlist_pstring(TList(FCell.Items[i]));
+    TList(FCell.Items[i]).Free;
+    end;
 FCell.Free;
 FCell:=NIL;
 (*@\\\*)
@@ -938,7 +1146,7 @@ FCell:=NIL;
   RemoveShowHintProc(ShowHintCell);
   inherited Destroy;
   end;
-(*@\\\0000001504*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.Initialize; *)
 procedure TStringAlignGrid.Initialize;
 begin
@@ -977,13 +1185,20 @@ begin
   f_fixedrows:=0;
   f_nextcell:=false;
   FAlwaysEdit:=false;
+  f_nextcell_edit:=nc_rightdown;
+  f_nextcell_tab:=nc_rightdown;
+  f_drawselect:=true;
+  f_lastcell_edit:=lc_newcolrow;
+  f_lastcell_tab:=lc_first;
   FFixedBrush:=TMyBrush.Create;
   FFixedBrush.Color:=FixedColor;
   FFixedBrush.OnChange:=BrushChanged;
+  f_compare_col:=self.CompareColString;
+  f_compare_row:=self.CompareRowString;
   AddShowHintProc(ShowHintCell);
   end;
-(*@\\\0000002A07*)
-(*@\\\0000000401*)
+(*@\\\*)
+(*@\\\*)
 
 (*@/// Internal routines for saving any data pointer (or a longint) in a List *)
 { Internal routines for saving any data pointer (or a longint) in a List }
@@ -1028,7 +1243,7 @@ begin
   p:=SetItemCol(ACol2,List,p);
   SetItemCol(ACol1,List,p);
   end;
-(*@\\\0000000703*)
+(*@\\\*)
 (*@/// procedure MoveItemCol(FromIndex, ToIndex: integer; list:TList); *)
 procedure MoveItemCol(FromIndex, ToIndex: integer; list:TList);
 var
@@ -1040,8 +1255,8 @@ begin
     list.add(NIL);
   list.Insert(ToIndex,p);
   end;
-(*@\\\0000000701*)
-(*@\\\000000050B*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Internal routines for saving any data pointer in a two-dimensional List *)
 { Internal routines for saving any data pointer in a two-dimensional List }
 (*@/// function GetItemCell(ACol,ARow: Integer; List:TList):Pointer; *)
@@ -1090,7 +1305,7 @@ begin
     sublist.Items[ARow]:=value;
   SetItemCell:=t;
   end;
-(*@\\\0000000C01*)
+(*@\\\*)
 (*@/// procedure ExchangeItemColRow(ARow1,ARow2:integer; list:TList); *)
 procedure ExchangeItemColRow(ARow1,ARow2:integer; list:TList);
 var
@@ -1106,7 +1321,7 @@ begin
     ExchangeItemCol(ARow1,ARow2,sublist);
     end;
   end;
-(*@\\\0000000C01*)
+(*@\\\*)
 (*@/// procedure MoveItemColRow(FromRow,ToRow:integer; list:TList); *)
 procedure MoveItemColRow(FromRow,ToRow:integer; list:TList);
 var
@@ -1127,8 +1342,8 @@ begin
     sublist.Insert(ToRow,p);
     end;
   end;
-(*@\\\0000001001*)
-(*@\\\0000000301*)
+(*@\\\*)
+(*@\\\*)
 
 (*@/// Property read and write and reset for the Alignments *)
 (*@/// Property read and write for Alignment *)
@@ -1178,7 +1393,7 @@ begin
   else
     result:=v^;
   end;
-(*@\\\000000070C*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetAlignCell(ACol,ARow:integer; const Value: TMyAlign); *)
 procedure TStringAlignGrid.SetAlignCell(ACol,ARow:integer; const Value: TMyAlign);
 var
@@ -1192,8 +1407,8 @@ begin
     dispose(v);
   Invalidate;
   end;
-(*@\\\0000000201*)
-(*@\\\0000000201*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Property read and write for AlignCol and FixedAlignCol *)
 { Property read and write for AlignCol and FixedAlignCol }
 (*@/// function TStringAlignGrid.GetAlignCol(ACol:Integer):TMyAlign; *)
@@ -1369,7 +1584,7 @@ begin
   end;
 (*@\\\*)
 (*@\\\*)
-(*@\\\0000000601*)
+(*@\\\*)
 (*@/// Property read and write and reset for the edit-enabled *)
 (*@/// Property read and write for EditCell *)
 { Property read and write for EditCell }
@@ -1394,7 +1609,7 @@ begin
   else
     result:=v^;
   end;
-(*@\\\0000000B01*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetEditCell(ACol,ARow:integer; const Value: boolean); *)
 procedure TStringAlignGrid.SetEditCell(ACol,ARow:integer; const Value: boolean);
 var
@@ -1409,7 +1624,7 @@ begin
   Invalidate;
   end;
 (*@\\\*)
-(*@\\\0000000201*)
+(*@\\\*)
 (*@/// Property read and write for EditCol *)
 { Property read and write for EditCol  }
 (*@/// function TStringAlignGrid.GetEditCol(ACol:Integer):boolean; *)
@@ -1423,7 +1638,7 @@ begin
   else
     GetEditCol:=v^;
   end;
-(*@\\\0000000707*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetEditCol(ACol:integer; const Value: boolean); *)
 procedure TStringAlignGrid.SetEditCol(ACol:integer; const Value: boolean);
 var
@@ -1437,8 +1652,8 @@ begin
     dispose(v);
   Invalidate;
   end;
-(*@\\\0000000C07*)
-(*@\\\0000000201*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Property read and write for EditRow *)
 { Property read and write for EditRow  }
 (*@/// function TStringAlignGrid.GetAlignRow(ARow:Integer):boolean; *)
@@ -1452,7 +1667,7 @@ begin
   else
     GetEditRow:=v^;
   end;
-(*@\\\0000000A07*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetEditRow(ARow:integer; const Value: boolean); *)
 procedure TStringAlignGrid.SetEditRow(ARow:integer; const Value: boolean);
 var
@@ -1466,8 +1681,8 @@ begin
     dispose(v);
   Invalidate;
   end;
-(*@\\\0000000C07*)
-(*@\\\0000000301*)
+(*@\\\*)
+(*@\\\*)
 
 (*@/// Reset edit-enabled and use the one defined a level above *)
 (*@/// procedure TStringAlignGrid.ResetEditCell(ACol,ARow:integer); *)
@@ -1480,7 +1695,7 @@ begin
     dispose(v);
   Invalidate;
   end;
-(*@\\\0000000907*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ResetEditCol(ACol:integer); *)
 procedure TStringAlignGrid.ResetEditCol(ACol:integer);
 var
@@ -1491,7 +1706,7 @@ begin
     dispose(v);
   Invalidate;
   end;
-(*@\\\000000030D*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ResetEditRow(ARow:integer); *)
 procedure TStringAlignGrid.ResetEditRow(ARow:integer);
 var
@@ -1502,9 +1717,9 @@ begin
     dispose(v);
   Invalidate;
   end;
-(*@\\\000000030A*)
 (*@\\\*)
-(*@\\\0000000301*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Property read and write and reset for Fonts *)
 (*@/// Property read and write for FontCell *)
 { Property read and write for FontCell }
@@ -1513,7 +1728,7 @@ function TStringAlignGrid.GetFontCell(ACol,ARow: integer):TFont;
 begin
   GetFontCell:=GetFontCellInternal(ACol,ARow,true);
   end;
-(*@\\\0000000323*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetFontCell(ACol,ARow: integer; const Value: TFont); *)
 procedure TStringAlignGrid.SetFontCell(ACol,ARow: integer; const Value: TFont);
 var
@@ -1528,8 +1743,8 @@ begin
     TFont(v).Free;
   Invalidate;
   end;
-(*@\\\0000000701*)
-(*@\\\0000000301*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Property read and write for FontCol/FixedFontCol *)
 { Property read and write for FontCol/FixedFontCol }
 (*@/// function TStringAlignGrid.GetFontCol(ACol: integer):TFont; *)
@@ -1537,7 +1752,7 @@ function TStringAlignGrid.GetFontCol(ACol: integer):TFont;
 begin
   GetFontCol:=GetFontColRowInternal(ACol,true,FFontCol);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetFontCol(ACol: integer; const Value: TFont); *)
 procedure TStringAlignGrid.SetFontCol(ACol: integer; const Value: TFont);
 var
@@ -1552,7 +1767,7 @@ begin
     TFont(v).Free;
   Invalidate;
   end;
-(*@\\\0000000126*)
+(*@\\\*)
 (*@/// function TStringAlignGrid.GetFontFixedCol(ACol: integer):TFont; *)
 function TStringAlignGrid.GetFontFixedCol(ACol: integer):TFont;
 begin
@@ -1573,8 +1788,8 @@ begin
     TFont(v).Free;
   Invalidate;
   end;
-(*@\\\0000000706*)
-(*@\\\0000000501*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Property read and write for FontRow/FixedFontRow *)
 { Property read and write for FontRow }
 (*@/// function TStringAlignGrid.GetFontRow(ARow: integer):TFont; *)
@@ -1597,7 +1812,7 @@ begin
     TFont(v).Free;
   Invalidate;
   end;
-(*@\\\0000000706*)
+(*@\\\*)
 (*@/// function TStringAlignGrid.GetFontFixedRow(ARow: integer):TFont; *)
 function TStringAlignGrid.GetFontFixedRow(ARow: integer):TFont;
 begin
@@ -1618,8 +1833,8 @@ begin
     TFont(v).Free;
   Invalidate;
   end;
-(*@\\\0000000706*)
-(*@\\\0000000401*)
+(*@\\\*)
+(*@\\\*)
 
 (*@/// Reset font and use the one defined a level above *)
 (*@/// procedure TStringAlignGrid.ResetFontCol(ACol:integer); *)
@@ -1678,7 +1893,7 @@ begin
   end;
 (*@\\\*)
 (*@\\\*)
-(*@\\\0000000501*)
+(*@\\\*)
 (*@/// Property read and write and reset for Brushs *)
 (*@/// Property read and write for BrushCell *)
 { Property read and write for BrushCell }
@@ -1687,7 +1902,7 @@ function TStringAlignGrid.GetBrushCell(ACol,ARow: integer):TBrush;
 begin
   GetBrushCell:=GetBrushCellInternal(ACol,ARow,true);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetBrushCell(ACol,ARow: integer; const Value: TBrush); *)
 procedure TStringAlignGrid.SetBrushCell(ACol,ARow: integer; const Value: TBrush);
 var
@@ -1702,8 +1917,8 @@ begin
     TBrush(v).Free;
   Invalidate;
   end;
-(*@\\\000000070D*)
-(*@\\\0000000301*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Property read and write for BrushCol/FixedBrushCol *)
 { Property read and write for BrushCol/FixedBrushCol }
 (*@/// function TStringAlignGrid.GetBrushCol(ACol: integer):TBrush; *)
@@ -1711,7 +1926,7 @@ function TStringAlignGrid.GetBrushCol(ACol: integer):TBrush;
 begin
   GetBrushCol:=GetBrushColRowInternal(ACol,true,FBrushCol);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetBrushCol(ACol: integer; const Value: TBrush); *)
 procedure TStringAlignGrid.SetBrushCol(ACol: integer; const Value: TBrush);
 var
@@ -1748,7 +1963,7 @@ begin
   Invalidate;
   end;
 (*@\\\*)
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// Property read and write for BrushRow/FixedBrushRow *)
 { Property read and write for BrushRow }
 (*@/// function TStringAlignGrid.GetBrushRow(ARow: integer):TBrush; *)
@@ -1866,6 +2081,7 @@ begin
 procedure TStringAlignGrid.SetColorCell(ACol,ARow:integer; const Value: TColor);
 begin
   CellBrush[ACol,ARow].Color:=value;
+  Invalidate;
   end;
 (*@\\\*)
 (*@\\\*)
@@ -1887,6 +2103,7 @@ begin
 procedure TStringAlignGrid.SetColorCol(ACol:integer; const Value: TColor);
 begin
   ColBrush[Acol].color:=value;
+  Invalidate;
   end;
 (*@\\\*)
 (*@/// function TStringAlignGrid.GetFixColorCol(ACol:Integer):TColor; *)
@@ -1905,6 +2122,7 @@ begin
 procedure TStringAlignGrid.SetFixColorCol(ACol:integer; const Value: TColor);
 begin
   FixedColBrush[Acol].color:=value;
+  Invalidate;
   end;
 (*@\\\*)
 (*@\\\*)
@@ -1926,6 +2144,7 @@ begin
 procedure TStringAlignGrid.SetColorRow(ARow:integer; const Value: TColor);
 begin
   RowBrush[ARow].color:=value;
+  Invalidate;
   end;
 (*@\\\*)
 (*@/// function TStringAlignGrid.GetFixColorRow(ARow:Integer):TColor; *)
@@ -1944,6 +2163,7 @@ begin
 procedure TStringAlignGrid.SetFixColorRow(ARow:integer; const Value: TColor);
 begin
   FixedRowBrush[ARow].color:=value;
+  Invalidate;
   end;
 (*@\\\*)
 (*@\\\*)
@@ -1986,6 +2206,7 @@ procedure TStringAlignGrid.SetFixedColor(const Value: TColor);
 begin
   inherited FixedColor:=value;
   FFixedBrush.color:=value;
+  Invalidate;
   end;
 (*@\\\*)
 (*@/// procedure TStringAlignGrid.SetSelCellColor(Value: TColor); *)
@@ -2026,7 +2247,7 @@ begin
   else
     result:=v^;
   end;
-(*@\\\0000000401*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetSelColorCell(ACol,ARow:integer; const Value: TColor); *)
 procedure TStringAlignGrid.SetSelColorCell(ACol,ARow:integer; const Value: TColor);
 var
@@ -2068,8 +2289,8 @@ begin
     dispose(v);
   Invalidate;
   end;
-(*@\\\0000000307*)
-(*@\\\0000000201*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Property read and write for SelColorRow *)
 (*@/// function TStringAlignGrid.GetSelColorRow(ARow:Integer):TColor; *)
 function TStringAlignGrid.GetSelColorRow(ARow:Integer):TColor;
@@ -2109,7 +2330,7 @@ begin
     dispose(v);
   Invalidate;
   end;
-(*@\\\0000000129*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ResetSelectedColorCol(ACol:integer); *)
 procedure TStringAlignGrid.ResetSelectedColorCol(ACol:integer);
 var
@@ -2156,7 +2377,7 @@ begin
   else
     result:=v^;
   end;
-(*@\\\0000000B1F*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SetSelFontColorCell(ACol,ARow:integer; const Value: TColor); *)
 procedure TStringAlignGrid.SetSelFontColorCell(ACol,ARow:integer; const Value: TColor);
 var
@@ -2262,7 +2483,7 @@ begin
   Invalidate;
   end;
 (*@\\\*)
-(*@\\\0000000744*)
+(*@\\\*)
 (*@/// Property read and write for HintCell *)
 { Property read and write for HintCell }
 (*@/// function TStringAlignGrid.GetHintCell(ACol,ARow: integer):string; *)
@@ -2288,10 +2509,61 @@ begin
   if v<>NIL then
     DisposeStr(v);
   end;
-(*@\\\0000000901*)
-(*@\\\0000000301*)
+(*@\\\*)
+(*@\\\*)
+(*@/// Resetting all the setting at once *)
+(*@/// procedure TStringAligngrid.ResetAllCell(ACol,ARow:integer); *)
+procedure TStringAligngrid.ResetAllCell(ACol,ARow:integer);
+begin
+  ResetAlignCell(ACol,ARow);
+  ResetEditCell(ACol,ARow);
+  ResetFontCell(ACol,ARow);
+  ResetBrushCell(ACol,ARow);
+  ResetSelectedColorCell(ACol,ARow);
+  ResetSelectedFontColorCell(ACol,ARow);
+  end;
+(*@\\\*)
+(*@/// procedure TStringAligngrid.ResetAllCol(ACol:integer); *)
+procedure TStringAligngrid.ResetAllCol(ACol:integer);
+begin
+  ResetAlignCol(ACol);
+  ResetEditCol(ACol);
+  ResetFontCol(ACol);
+  ResetBrushCol(ACol);
+  ResetSelectedColorCol(ACol);
+  ResetSelectedFontColorCol(ACol);
+  end;
+(*@\\\*)
+(*@/// procedure TStringAligngrid.ResetAllFixedCol(ACol:integer); *)
+procedure TStringAligngrid.ResetAllFixedCol(ACol:integer);
+begin
+  ResetAlignFixedCol(ACol);
+  ResetFontFixedCol(ACol);
+  ResetBrushFixedCol(ACol);
+  end;
+(*@\\\*)
+(*@/// procedure TStringAligngrid.ResetAllRow(ARow:integer); *)
+procedure TStringAligngrid.ResetAllRow(ARow:integer);
+begin
+  ResetAlignRow(ARow);
+  ResetEditRow(ARow);
+  ResetFontRow(ARow);
+  ResetBrushRow(ARow);
+  ResetSelectedColorRow(ARow);
+  ResetSelectedFontColorRow(ARow);
+  end;
+(*@\\\*)
+(*@/// procedure TStringAligngrid.ResetAllFixedRow(ARow:integer); *)
+procedure TStringAligngrid.ResetAllFixedRow(ARow:integer);
+begin
+  ResetAlignFixedRow(ARow);
+  ResetFontFixedRow(ARow);
+  ResetBrushFixedRow(ARow);
+  end;
+(*@\\\*)
+(*@\\\*)
 
-(*@/// Insertion, removing and moving of Rows and Columns *)
+(*@/// Insertion, removing, moving and exchanging of Rows and Columns *)
 { Cols.Delete[i] isn't implemented in any Delphi version I know of, it
   is abstract in D1/D2, in D3 at least an exception InvalidOp is raised.
   Same hold for Rows.Delete, Rows.Insert and Cols.Insert.
@@ -2324,9 +2596,10 @@ if FFAlignCol.Count>=ACol then begin
   end;
 if FAlignCell.Count>ACol then begin
   cleanlist(TList(FAlignCell.Items[ACol]),sizeof(TMyAlign));
+  TList(FAlignCell.Items[ACol]).Free;
   FAlignCell.Delete(ACol);
   end;
-(*@\\\0000001001*)
+(*@\\\*)
 (*@///   EditCol/Cell *)
 if FEditCol.Count>=ACol then begin
   z:=SetItemCol(ACol,FEditCol,NIL);
@@ -2336,9 +2609,10 @@ if FEditCol.Count>=ACol then begin
   end;
 if FEditCell.Count>ACol then begin
   cleanlist(TList(FEditCell.Items[ACol]),sizeof(boolean));
+  TList(FEditCell.Items[ACol]).Free;
   FEditCell.Delete(ACol);
   end;
-(*@\\\0000000714*)
+(*@\\\*)
 (*@///   SelColorCol/Cell *)
 if FSelColorCol.Count>=ACol then begin
   w:=SetItemCol(ACol,FSelColorCol,NIL);
@@ -2348,6 +2622,7 @@ if FSelColorCol.Count>=ACol then begin
   end;
 if FSelColorCell.Count>ACol then begin
   cleanlist(TList(FSelColorCell.Items[ACol]),sizeof(TColor));
+  TList(FSelColorCell.Items[ACol]).Free;
   FSelColorCell.Delete(ACol);
   end;
 (*@\\\*)
@@ -2360,6 +2635,7 @@ if FSelFontColorCol.Count>=ACol then begin
   end;
 if FSelFontColorCell.Count>ACol then begin
   cleanlist(TList(FSelFontColorCell.Items[ACol]),sizeof(TColor));
+  TList(FSelFontColorCell.Items[ACol]).Free;
   FSelFontColorCell.Delete(ACol);
   end;
 (*@\\\*)
@@ -2376,8 +2652,9 @@ if FFFontCol.Count>=ACol then begin
     TMyFont(x).free;
   FFFontCol.Delete(ACol);
   end;
-if FFontCell.Count>=ACol then begin
+if FFontCell.Count>ACol then begin
   cleanlist_object(TList(FFontCell.Items[ACol]));
+  TList(FFontCell.Items[ACol]).Free;
   FFontCell.Delete(ACol);
   end;
 (*@\\\*)
@@ -2394,14 +2671,16 @@ if FFBrushCol.Count>=ACol then begin
     TMyBrush(x).free;
   FFBrushCol.Delete(ACol);
   end;
-if FBrushCell.Count>=ACol then begin
+if FBrushCell.Count>ACol then begin
   cleanlist_object(TList(FBrushCell.Items[ACol]));
+  TList(FBrushCell.Items[ACol]).Free;
   FBrushCell.Delete(ACol);
   end;
-(*@\\\0000001007*)
+(*@\\\*)
 (*@///   HintCell *)
-if FHintCell.Count>=ACol then begin
+if FHintCell.Count>ACol then begin
   cleanlist_pstring(TList(FHintCell.Items[ACol]));
+  TList(FHintCell.Items[ACol]).Free;
   FHintCell.Delete(ACol);
   end;
 (*@\\\*)
@@ -2413,7 +2692,7 @@ Cols[Colcount-1].clear;
   colcount:=colcount-1;
   invalidate;
   end;
-(*@\\\0000001507*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.RemoveRow(ARow:Integer); *)
 procedure TStringAlignGrid.RemoveRow(ARow:Integer);
 var
@@ -2470,7 +2749,7 @@ for i:=0 to FEditCell.Count-1 do begin
       end;
     end;
   end;
-(*@\\\0000001107*)
+(*@\\\*)
 (*@///   SelColorRow/Cell *)
 if FSelColorRow.Count>=ARow then begin
   w:=SetItemCol(ARow,FSelColorRow,NIL);
@@ -2533,7 +2812,7 @@ for i:=0 to FFontCell.Count-1 do begin
       end;
     end;
   end;
-(*@\\\0000001609*)
+(*@\\\*)
 (*@///   BrushRow/Cell *)
 if FBrushRow.Count>=ARow then begin
   x:=SetItemCol(ARow,FBrushRow,NIL);
@@ -2558,7 +2837,7 @@ for i:=0 to FBrushCell.Count-1 do begin
       end;
     end;
   end;
-(*@\\\0000001707*)
+(*@\\\*)
 (*@///   HintCell *)
 for i:=0 to FHintCell.Count-1 do begin
   l:=TList(FHintCell.Items[i]);
@@ -2571,16 +2850,16 @@ for i:=0 to FHintCell.Count-1 do begin
       end;
     end;
   end;
-(*@\\\0000000A09*)
+(*@\\\*)
 (*@///   Cell *)
 for i:=ARow to RowCount-2 do
   inherited RowMoved(i,i+1);
 Rows[Rowcount-1].clear;
-(*@\\\0000000301*)
+(*@\\\*)
   rowcount:=rowcount-1;
   invalidate;
   end;
-(*@\\\0000001707*)
+(*@\\\*)
 
 (*@/// procedure TStringAlignGrid.InsertCol(ACol:Integer); *)
 procedure TStringAlignGrid.InsertCol(ACol:Integer);
@@ -2596,19 +2875,19 @@ if FFAlignCol.Count>=ACol then
   FFAlignCol.Insert(ACol,NIL);
 if FAlignCell.Count>=ACol then
   FAlignCell.Insert(ACol,NIL);
-(*@\\\0000000201*)
+(*@\\\*)
 (*@///   EditCol/Cell *)
 if FEditCol.Count>=ACol then
   FEditCol.Insert(ACol,NIL);
 if FEditCell.Count>=ACol then
   FEditCell.Insert(ACol,NIL);
-(*@\\\000000041E*)
+(*@\\\*)
 (*@///   SelColorCol/Cell *)
 if FSelColorCol.Count>=ACol then
   FSelColorCol.Insert(ACol,NIL);
 if FSelColorCell.Count>=ACol then
   FSelColorCell.Insert(ACol,NIL);
-(*@\\\0000000301*)
+(*@\\\*)
 (*@///   SelFontColorCol/Cell *)
 if FSelFontColorCol.Count>=ACol then
   FSelFontColorCol.Insert(ACol,NIL);
@@ -2622,7 +2901,7 @@ if FFFontCol.Count>=ACol then
   FFFontCol.Insert(ACol,NIL);
 if FFontCell.Count>=ACol then
   FFontCell.Insert(ACol,NIL);
-(*@\\\0000000501*)
+(*@\\\*)
 (*@///   BrushCol/Cell *)
 if FBrushCol.Count>=ACol then
   FBrushCol.Insert(ACol,NIL);
@@ -2630,7 +2909,7 @@ if FFBrushCol.Count>=ACol then
   FFBrushCol.Insert(ACol,NIL);
 if FBrushCell.Count>=ACol then
   FBrushCell.Insert(ACol,NIL);
-(*@\\\000000061F*)
+(*@\\\*)
 (*@///   HintCell *)
 if FHintCell.Count>=ACol then
   FHintCell.Insert(ACol,NIL);
@@ -2643,7 +2922,7 @@ for i:=ColCount-1 downto ACol+1 do
 (*@\\\*)
   invalidate;
   end;
-(*@\\\0000001007*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.InsertRow(ARow:Integer); *)
 procedure TStringAlignGrid.InsertRow(ARow:Integer);
 var
@@ -2659,37 +2938,37 @@ if FFAlignRow.Count>=ARow then
   FFAlignRow.Insert(ARow,NIL);
 for i:=0 to FAlignCell.Count-1 do begin
   l:=TList(FAlignCell.Items[i]);
-  if l.Count>=ARow then begin
+  if (l<>NIL) and (l.Count>=ARow) then begin
     l.Insert(ARow,NIL);
     end;
   end;
-(*@\\\0000000501*)
+(*@\\\*)
 (*@///   EditRow/Cell *)
 if FEditRow.Count>=ARow then
   FEditRow.Insert(ARow,NIL);
 for i:=0 to FEditCell.Count-1 do begin
   l:=TList(FEditCell.Items[i]);
-  if l.Count>=ARow then begin
+  if (l<>NIL) and (l.Count>=ARow) then begin
     l.Insert(ARow,NIL);
     end;
   end;
-(*@\\\0000000807*)
+(*@\\\*)
 (*@///   SelColorRow/Cell *)
 if FSelColorRow.Count>=ARow then
   FSelColorRow.Insert(ARow,NIL);
 for i:=0 to FSelColorCell.Count-1 do begin
   l:=TList(FSelColorCell.Items[i]);
-  if l.Count>=ARow then begin
+  if (l<>NIL) and (l.Count>=ARow) then begin
     l.Insert(ARow,NIL);
     end;
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@///   SelFontColorRow/Cell *)
 if FSelFontColorRow.Count>=ARow then
   FSelFontColorRow.Insert(ARow,NIL);
 for i:=0 to FSelFontColorCell.Count-1 do begin
   l:=TList(FSelFontColorCell.Items[i]);
-  if l.Count>=ARow then begin
+  if (l<>NIL) and (l.Count>=ARow) then begin
     l.Insert(ARow,NIL);
     end;
   end;
@@ -2701,7 +2980,7 @@ if FFFontRow.Count>=ARow then
   FFFontRow.Insert(ARow,NIL);
 for i:=0 to FFontCell.Count-1 do begin
   l:=TList(FFontCell.Items[i]);
-  if l.Count>=ARow then begin
+  if (l<>NIL) and (l.Count>=ARow) then begin
     l.Insert(ARow,NIL);
     end;
   end;
@@ -2713,19 +2992,19 @@ if FFBrushRow.Count>=ARow then
   FFBrushRow.Insert(ARow,NIL);
 for i:=0 to FBrushCell.Count-1 do begin
   l:=TList(FBrushCell.Items[i]);
-  if l.Count>=ARow then begin
+  if (l<>NIL) and (l.Count>=ARow) then begin
     l.Insert(ARow,NIL);
     end;
   end;
-(*@\\\0000000A07*)
+(*@\\\*)
 (*@///   HintCell *)
 for i:=0 to FHintCell.Count-1 do begin
   l:=TList(FHintCell.Items[i]);
-  if l.Count>=ARow then begin
+  if (l<>NIL) and (l.Count>=ARow) then begin
     l.Insert(ARow,NIL);
     end;
   end;
-(*@\\\000000040D*)
+(*@\\\*)
 (*@///   Cell *)
 Rows[RowCount-1].clear;
 for i:=RowCount-1 downto ARow+1 do
@@ -2733,11 +3012,12 @@ for i:=RowCount-1 downto ARow+1 do
 (*@\\\*)
   invalidate;
   end;
-(*@\\\0000001107*)
+(*@\\\*)
 
 (*@/// procedure TStringAlignGrid.RowMoved(FromIndex, ToIndex: Longint); *)
 procedure TStringAlignGrid.RowMoved(FromIndex, ToIndex: Longint);
 begin
+  if FromIndex=ToIndex then EXIT;
 (*@///   AlignRow/Cell *)
 MoveItemCol(FromIndex,ToIndex,FAlignRow);
 MoveItemCol(FromIndex,ToIndex,FFAlignRow);
@@ -2746,11 +3026,11 @@ MoveItemColRow(FromIndex,ToIndex,FAlignCell);
 (*@///   EditRow/Cell *)
 MoveItemCol(FromIndex,ToIndex,FEditRow);
 MoveItemColRow(FromIndex,ToIndex,FEditCell);
-(*@\\\000000022D*)
+(*@\\\*)
 (*@///   SelColorRow/Cell *)
 MoveItemCol(FromIndex,ToIndex,FSelColorRow);
 MoveItemColRow(FromIndex,ToIndex,FSelColorCell);
-(*@\\\0000000226*)
+(*@\\\*)
 (*@///   SelFontColorRow/Cell *)
 MoveItemCol(FromIndex,ToIndex,FSelFontColorRow);
 MoveItemColRow(FromIndex,ToIndex,FSelFontColorCell);
@@ -2764,7 +3044,7 @@ MoveItemColRow(FromIndex,ToIndex,FFontCell);
 MoveItemCol(FromIndex,ToIndex,FBrushRow);
 MoveItemCol(FromIndex,ToIndex,FFBrushRow);
 MoveItemColRow(FromIndex,ToIndex,FBrushCell);
-(*@\\\000000032E*)
+(*@\\\*)
 (*@///   HintCell *)
 MoveItemColRow(FromIndex,ToIndex,FHintCell);
 (*@\\\*)
@@ -2772,10 +3052,11 @@ MoveItemColRow(FromIndex,ToIndex,FHintCell);
 inherited RowMoved(FromIndex, ToIndex);
 (*@\\\*)
   end;
-(*@\\\0000000B07*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ColumnMoved(FromIndex, ToIndex: Longint); *)
 procedure TStringAlignGrid.ColumnMoved(FromIndex, ToIndex: Longint);
 begin
+  if FromIndex=ToIndex then EXIT;
 (*@///   AlignCol/Cell *)
 MoveItemCol(FromIndex,ToIndex,FAlignCol);
 MoveItemCol(FromIndex,ToIndex,FFAlignCol);
@@ -2784,11 +3065,11 @@ MoveItemCol(FromIndex,ToIndex,FAlignCell);
 (*@///   EditCol/Cell *)
 MoveItemCol(FromIndex,ToIndex,FEditCol);
 MoveItemCol(FromIndex,ToIndex,FEditCell);
-(*@\\\0000000201*)
+(*@\\\*)
 (*@///   SelColorCol/Cell *)
 MoveItemCol(FromIndex,ToIndex,FSelColorCol);
 MoveItemCol(FromIndex,ToIndex,FSelColorCell);
-(*@\\\0000000201*)
+(*@\\\*)
 (*@///   SelFontColorCol/Cell *)
 MoveItemCol(FromIndex,ToIndex,FSelFontColorCol);
 MoveItemCol(FromIndex,ToIndex,FSelFontColorCell);
@@ -2802,7 +3083,7 @@ MoveItemCol(FromIndex,ToIndex,FFontCell);
 MoveItemCol(FromIndex,ToIndex,FBrushCol);
 MoveItemCol(FromIndex,ToIndex,FFBrushCol);
 MoveItemCol(FromIndex,ToIndex,FBrushCell);
-(*@\\\000000032B*)
+(*@\\\*)
 (*@///   HintCell *)
 MoveItemCol(FromIndex,ToIndex,FHintCell);
 (*@\\\*)
@@ -2810,8 +3091,101 @@ MoveItemCol(FromIndex,ToIndex,FHintCell);
 inherited ColumnMoved(FromIndex, ToIndex);
 (*@\\\*)
   end;
-(*@\\\0000000B07*)
-(*@\\\0000000E01*)
+(*@\\\*)
+
+(*@/// procedure TStringAlignGrid.ExchangeRow(FromIndex, ToIndex: Longint); *)
+procedure TStringAlignGrid.ExchangeRow(FromIndex, ToIndex: Longint);
+var
+  i: longint;
+  s: string;
+begin
+  if FromIndex=ToIndex then EXIT;
+(*@///   AlignRow/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FAlignRow);
+ExchangeItemCol(FromIndex,ToIndex,FFAlignRow);
+ExchangeItemColRow(FromIndex,ToIndex,FAlignCell);
+(*@\\\*)
+(*@///   EditRow/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FEditRow);
+ExchangeItemColRow(FromIndex,ToIndex,FEditCell);
+(*@\\\*)
+(*@///   SelColorRow/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FSelColorRow);
+ExchangeItemColRow(FromIndex,ToIndex,FSelColorCell);
+(*@\\\*)
+(*@///   SelFontColorRow/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FSelFontColorRow);
+ExchangeItemColRow(FromIndex,ToIndex,FSelFontColorCell);
+(*@\\\*)
+(*@///   FontRow/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FFontRow);
+ExchangeItemCol(FromIndex,ToIndex,FFFontRow);
+ExchangeItemColRow(FromIndex,ToIndex,FFontCell);
+(*@\\\*)
+(*@///   BrushRow/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FBrushRow);
+ExchangeItemCol(FromIndex,ToIndex,FFBrushRow);
+ExchangeItemColRow(FromIndex,ToIndex,FBrushCell);
+(*@\\\*)
+(*@///   HintCell *)
+ExchangeItemColRow(FromIndex,ToIndex,FHintCell);
+(*@\\\*)
+(*@///   Cells *)
+for i:=0 to ColCount-1 do begin
+  s:=Cells[i,FromIndex];
+  Cells[i,FromIndex]:=Cells[i,ToIndex];
+  Cells[i,ToIndex]:=s;
+  end;
+(*@\\\*)
+  end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.ExchangeCol(FromIndex, ToIndex: Longint); *)
+procedure TStringAlignGrid.ExchangeCol(FromIndex, ToIndex: Longint);
+var
+  i: longint;
+  s: string;
+begin
+  if FromIndex=ToIndex then EXIT;
+(*@///   AlignCol/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FAlignCol);
+ExchangeItemCol(FromIndex,ToIndex,FFAlignCol);
+ExchangeItemCol(FromIndex,ToIndex,FAlignCell);
+(*@\\\*)
+(*@///   EditCol/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FEditCol);
+ExchangeItemCol(FromIndex,ToIndex,FEditCell);
+(*@\\\*)
+(*@///   SelColorCol/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FSelColorCol);
+ExchangeItemCol(FromIndex,ToIndex,FSelColorCell);
+(*@\\\*)
+(*@///   SelFontColorCol/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FSelFontColorCol);
+ExchangeItemCol(FromIndex,ToIndex,FSelFontColorCell);
+(*@\\\*)
+(*@///   FontCol/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FFontCol);
+ExchangeItemCol(FromIndex,ToIndex,FFFontCol);
+ExchangeItemCol(FromIndex,ToIndex,FFontCell);
+(*@\\\*)
+(*@///   BrushCol/Cell *)
+ExchangeItemCol(FromIndex,ToIndex,FBrushCol);
+ExchangeItemCol(FromIndex,ToIndex,FFBrushCol);
+ExchangeItemCol(FromIndex,ToIndex,FBrushCell);
+(*@\\\*)
+(*@///   HintCell *)
+ExchangeItemCol(FromIndex,ToIndex,FHintCell);
+(*@\\\*)
+(*@///   Cells *)
+for i:=0 to RowCount-1 do begin
+  s:=Cells[FromIndex,i];
+  Cells[FromIndex,i]:=Cells[ToIndex,i];
+  Cells[ToIndex,i]:=s;
+  end;
+(*@\\\*)
+  end;
+(*@\\\*)
+(*@\\\*)
 
 (*@/// Utility methods for the fonts/brushs *)
 (*@/// function TStringAlignGrid.GetFontColRowInternal(AColRow: integer; create:boolean; List:TList):TFont; *)
@@ -2831,7 +3205,7 @@ begin
     end;
   GetFontColRowInternal:=TFont(v);
   end;
-(*@\\\0000000B01*)
+(*@\\\*)
 (*@/// function TStringAlignGrid.GetFontCellInternal(ACol,ARow: integer; create:boolean):TFont; *)
 function TStringAlignGrid.GetFontCellInternal(ACol,ARow: integer; create:boolean):TFont;
 var
@@ -2849,7 +3223,7 @@ begin
     end;
   GetFontCellInternal:=TFont(v);
   end;
-(*@\\\000000012E*)
+(*@\\\*)
 (*@/// function TStringAlignGrid.GetBrushColRowInternal(AColRow: integer; create:boolean; List:TList):TBrush; *)
 function TStringAlignGrid.GetBrushColRowInternal(AColRow: integer; create:boolean; List:TList):TBrush;
 var
@@ -2912,7 +3286,7 @@ begin
     end;
   GetFontCellComplete:=TFont(v);
   end;
-(*@\\\000000011B*)
+(*@\\\*)
 (*@/// function TStringAlignGrid.GetBrushCellComplete(ACol,ARow: integer):TBrush; *)
 function TStringAlignGrid.GetBrushCellComplete(ACol,ARow: integer):TBrush;
 var
@@ -2941,7 +3315,7 @@ begin
     end;
   GetBrushCellComplete:=TBrush(v);
   end;
-(*@\\\0000001B01*)
+(*@\\\*)
 
 { A callback to be sure the displayed font/brush is the same as the internal }
 (*@/// procedure TStringAlignGrid.FontChanged(AFont: TObject); *)
@@ -2990,7 +3364,7 @@ begin
   inherited MouseMove(Shift, X, Y);
   end;
 (*@\\\*)
-(*@\\\0000000201*)
+(*@\\\*)
 (*@/// The Inplace-Editor which also gets the alignment, font and color *)
 { The Inplace-Editor which also gets the alignment, font and color -
   got the idea from James Sager's (jsager@ao.net) TIEAlignStringGrid -
@@ -3003,7 +3377,7 @@ begin
   TNewInplaceEdit(Result).Col:=-1;
   TNewInplaceEdit(Result).Row:=-1;
   end;
-(*@\\\0000000401*)
+(*@\\\*)
 (*@/// function TStringAlignGrid.CanEditShow: Boolean; *)
 function TStringAlignGrid.CanEditShow: Boolean;
 begin
@@ -3012,9 +3386,11 @@ begin
      (InplaceEditor is TNewInplaceEdit) then begin
     if (TNewInplaceEdit(InplaceEditor).Col<>Col) or
        (TNewInplaceEdit(InplaceEditor).Row<>Row) then begin
-      postmessage(self.handle,cn_edit_exit,
-        TNewInplaceEdit(InplaceEditor).Col,
-        TNewInplaceEdit(InplaceEditor).Row);
+      if (TNewInplaceEdit(InplaceEditor).Col>=0) and
+         (TNewInplaceEdit(InplaceEditor).Row>=0) then
+        postmessage(self.handle,cn_edit_exit,
+          TNewInplaceEdit(InplaceEditor).Col,
+          TNewInplaceEdit(InplaceEditor).Row);
       TNewInplaceEdit(InplaceEditor).event:=false;
       end;
     if not (csDesigning in ComponentState) then
@@ -3037,10 +3413,11 @@ begin
     else begin
       TNewInplaceEdit(InplaceEditor).Col:=-1;
       TNewInplaceEdit(InplaceEditor).Row:=-1;
+      EditorMode:=false; (* otherwise the grid thinks the editor is visible *)
       end;
     end;
   end;
-(*@\\\0000001201*)
+(*@\\\*)
 
 (*@/// procedure TStringAlignGrid.ShowEdit; *)
 procedure TStringAlignGrid.ShowEdit;
@@ -3048,7 +3425,7 @@ begin
   ShowEditor;
   edit_visible:=true;
   end;
-(*@\\\0000000416*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.HideEdit(cancel:boolean); *)
 procedure TStringAlignGrid.HideEdit(cancel:boolean);
 var
@@ -3066,23 +3443,44 @@ begin
       end;
     end;
   end;
-(*@\\\0000000517*)
+(*@\\\*)
 
 { The stuff to get the editor's events right }
 
 (*@/// procedure TStringAlignGrid.doExit; *)
 procedure TStringAlignGrid.doExit;
 begin
-  if (InplaceEditor<>NIL) and (InplaceEditor.visible) then
+  if (InplaceEditor<>NIL) and (InplaceEditor.visible) then begin
+    f_reshow_edit:=true;
+    f_last_sel_pos:=InplaceEditor.SelStart;
+    f_last_sel_len:=InplaceEditor.SelLength;
     hideedit(false);
+    end;
 (*   if the edit is still visible the contents of the cell   *)
 (*   seems to be invalid, so just take back the focus        *)
   if self.edit_visible then
     self.setfocus
-  else
+  else begin
     inherited doexit;
+    EditorMode:=false; (* otherwise the grid thinks the editor is visible *)
+    end;
   end;
-(*@\\\000000020C*)
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.DoEnter; *)
+procedure TStringAlignGrid.DoEnter;
+begin
+  inherited doenter;
+  if f_reshow_edit and (goAlwaysShowEditor in options) then begin
+
+    { Showing the editor here directly comes too early, there are
+      other windows messages needed to be processed before, so I put
+      this at the end of the message queue. Ugly, but the only way I
+      could get this running. }
+
+    postmessage(self.handle,cn_edit_toshow,0,0);
+    end;
+  end;
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.mcn_edit_return(var msg:TMessage); *)
 procedure TStringAlignGrid.mcn_edit_return(var msg:TMessage);
 var
@@ -3090,14 +3488,14 @@ var
 begin
   edit_visible:=false;
   if assigned(f_on_after_edit) and
-    (msg.wparam>0) and (msg.lparam>0) then
+    (msg.wparam>=0) and (msg.lparam>=0) then
     f_on_after_edit(self,msg.wparam,msg.lparam);
   if f_nextcell and
-    (msg.wparam>0) and (msg.lparam>0) then begin
+    (msg.wparam>=0) and (msg.lparam>=0) then begin
     ACol:=self.col;
     ARow:=self.row;
     self.NextEditableCell(ACol,ARow);
-    if (ACol>0) and (ARow>0) then begin
+    if (ACol>=0) and (ARow>=0) then begin
       if InplaceEditor<>NIL then begin
         TNewInplaceEdit(InplaceEditor).Col:=-1;
         TNewInplaceEdit(InplaceEditor).Row:=-1;
@@ -3108,34 +3506,43 @@ begin
       end;
     end;
   end;
-(*@\\\0000000201*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.mcn_edit_cancel(var msg:TMessage); *)
 procedure TStringAlignGrid.mcn_edit_cancel(var msg:TMessage);
 begin
   edit_visible:=false;
   if assigned(f_on_cancel_edit) and
-    (msg.wparam>0) and (msg.lparam>0) then
+    (msg.wparam>=0) and (msg.lparam>=0) then
     f_on_cancel_edit(self,msg.wparam,msg.lparam);
   end;
-(*@\\\0000000401*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.mcn_edit_exit(var msg:TMessage); *)
 procedure TStringAlignGrid.mcn_edit_exit(var msg:TMessage);
 begin
   edit_visible:=false;
   if assigned(f_on_after_edit) and
-    (msg.wparam>0) and (msg.lparam>0) then
+    (msg.wparam>=0) and (msg.lparam>=0) then
     f_on_after_edit(self,msg.wparam,msg.lparam);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.mcn_edit_show(var msg:TMessage); *)
 procedure TStringAlignGrid.mcn_edit_show(var msg:TMessage);
 begin
   if assigned(f_on_before_edit) and
-    (msg.wparam>0) and (msg.lparam>0) then
+    (msg.wparam>=0) and (msg.lparam>=0) then
     f_on_before_edit(self,msg.wparam,msg.lparam);
   edit_visible:=true;
   end;
-(*@\\\0000000601*)
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.mcn_edit_show_it(var msg:TMessage); *)
+procedure TStringAlignGrid.mcn_edit_show_it(var msg:TMessage);
+{ It's a hack, see DoEnter for more }
+begin
+  showeditor;
+  InplaceEditor.SelStart:=f_last_sel_pos;
+  InplaceEditor.SelLength:=f_last_sel_len;
+  end;
+(*@\\\*)
 (*@\\\*)
 (*@/// The stuff for reading and writing the data from/to the DFM file *)
 (*@/// procedure TStringAlignGrid.DefineProperties(Filer: TFiler); *)
@@ -3171,7 +3578,7 @@ begin
   Filer.DefineProperty('SelectedColorCol', ReadSelColorCol, WriteSelColorCol, FSaveSelColorCol);
   Filer.DefineProperty('SelectedColorRow', ReadSelColorRow, WriteSelColorRow, FSaveSelColorRow);
   end;
-(*@\\\0000001D01*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.Loaded; *)
 procedure TStringAlignGrid.Loaded;
 { Fill the cell list into the original cells property after loading;
@@ -3189,8 +3596,10 @@ FCell.Free;
 FCell:=NIL;
 (*@\\\*)
     end;
+  f_reshow_edit:=(goAlwaysShowEditor in options);
+  self.hideeditor;
   end;
-(*@\\\0000000A0A*)
+(*@\\\*)
 
 (*@/// Read and write several alignment lists to the DFM *)
 { All the routines for the several alignment lists }
@@ -3272,7 +3681,7 @@ procedure TStringAlignGrid.WriteAlignRow(Stream: TStream);
 begin
   WriteAlignColRow(Stream, RowCount-1, FAlignRow);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.WriteFixedAlignRow(Stream: TStream); *)
 procedure TStringAlignGrid.WriteFixedAlignRow(Stream: TStream);
 begin
@@ -3316,7 +3725,7 @@ begin
     end;
   end;
 (*@\\\*)
-(*@\\\0000000A01*)
+(*@\\\*)
 (*@/// Read and write several edit-enabled lists to the DFM *)
 { All the routines for the several edit-enabled lists }
 (*@/// procedure TStringAlignGrid.ReadEditCell(Stream: TStream); *)
@@ -3337,7 +3746,7 @@ begin
       dispose(p);
     end;
   end;
-(*@\\\0000001107*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.WriteEditCell(Stream: TStream); *)
 procedure TStringAlignGrid.WriteEditCell(Stream: TStream);
 var
@@ -3355,7 +3764,7 @@ begin
       end;
     end;
   end;
-(*@\\\0000000C27*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ReadEditCol(Stream: TStream); *)
 procedure TStringAlignGrid.ReadEditCol(Stream: TStream);
 begin
@@ -3373,13 +3782,13 @@ procedure TStringAlignGrid.WriteEditCol(Stream: TStream);
 begin
   WriteEditColRow(Stream, ColCount-1, FEditCol);
   end;
-(*@\\\0000000401*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.WriteEditRow(Stream: TStream); *)
 procedure TStringAlignGrid.WriteEditRow(Stream: TStream);
 begin
   WriteEditColRow(Stream, RowCount-1, FEditRow);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 
 { All the ReadCol, ReadRow are so similar, so these to routines are there
   to avoid code-copy }
@@ -3401,7 +3810,7 @@ begin
       dispose(p);
     end;
   end;
-(*@\\\0000001107*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.WriteEditColRow(Stream: TStream; count: integer; list:TList); *)
 procedure TStringAlignGrid.WriteEditColRow(Stream: TStream; count: integer; list:TList);
 var
@@ -3416,8 +3825,8 @@ begin
       end;
     end;
   end;
-(*@\\\0000000A25*)
-(*@\\\0000000128*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Read and write the hint strings to the DFM *)
 { The hint and the cell strings }
 (*@/// procedure TStringAlignGrid.ReadHint(Reader: TReader); *)
@@ -3458,8 +3867,8 @@ begin
     end;
   Writer.WriteListEnd;
   end;
-(*@\\\0000000D01*)
-(*@\\\0000000301*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Read and write the cell strings to the DFM *)
 (*@/// procedure TStringAlignGrid.ReadCells(Reader: TReader); *)
 procedure TStringAlignGrid.ReadCells(Reader: TReader);
@@ -3499,7 +3908,7 @@ begin
     end;
   Writer.WriteListEnd;
   end;
-(*@\\\0000000D1B*)
+(*@\\\*)
 
 { To convert TStringGrid's own Cell property to my list and vice versa }
 (*@/// procedure TStringAlignGrid.ListToCells(List:TList); *)
@@ -3537,7 +3946,7 @@ begin
     end;
   end;
 (*@\\\*)
-(*@\\\0000000201*)
+(*@\\\*)
 (*@/// Read and write several font lists to the DFM *)
 { All the routines for the different font lists }
 (*@/// procedure TStringAlignGrid.ReadFontCell(Reader: TReader); *)
@@ -3545,7 +3954,7 @@ procedure TStringAlignGrid.ReadFontCell(Reader: TReader);
 begin
   FSaveFontCell:=ReadFontCellInt(Reader,FFontCell);
   end;
-(*@\\\0000000407*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ReadFontCol(Reader: TReader); *)
 procedure TStringAlignGrid.ReadFontCol(Reader: TReader);
 begin
@@ -3622,7 +4031,7 @@ begin
     end;
   Reader.ReadListEnd;
   end;
-(*@\\\0000000901*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.WriteFontCellInt(Writer: TWriter; x,y:integer; list:TList); *)
 procedure TStringAlignGrid.WriteFontCellInt(Writer: TWriter; x,y:integer; list:TList);
 var
@@ -3723,8 +4132,8 @@ begin
   result.style:=TFontStyles(pointer(@t)^);
   result.OnChange:=FontChanged;
   end;
-(*@\\\0000000601*)
-(*@\\\0000000201*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Read and write several brush lists to the DFM *)
 { All the routines for the different Brush lists }
 (*@/// procedure TStringAlignGrid.ReadBrushCell(Reader: TReader); *)
@@ -3732,7 +4141,7 @@ procedure TStringAlignGrid.ReadBrushCell(Reader: TReader);
 begin
   FSaveBrushCell:=ReadBrushCellInt(Reader,FBrushCell);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ReadBrushCol(Reader: TReader); *)
 procedure TStringAlignGrid.ReadBrushCol(Reader: TReader);
 begin
@@ -3762,7 +4171,7 @@ procedure TStringAlignGrid.WriteBrushCell(Writer: TWriter);
 begin
   WriteBrushCellInt(Writer,ColCount-1,RowCount-1,FBrushCell);
   end;
-(*@\\\0000000201*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.WriteBrushCol(Writer: TWriter); *)
 procedure TStringAlignGrid.WriteBrushCol(Writer: TWriter);
 begin
@@ -3886,8 +4295,8 @@ begin
   result.style:=TBrushStyle(Reader.ReadInteger);
   result.OnChange:=BrushChanged;
   end;
-(*@\\\0000000619*)
-(*@\\\0000000F01*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Read several color lists to the DFM *)
 { Only the read methods to read old DFM files correctly, all is now saved }
 { via the brushes }
@@ -3904,31 +4313,31 @@ begin
     end;
   Reader.ReadListEnd;
   end;
-(*@\\\0000000401*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ReadColorCol(Reader: TReader); *)
 procedure TStringAlignGrid.ReadColorCol(Reader: TReader);
 begin
   ReadColorColRow(Reader,0);
   end;
-(*@\\\0000000312*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ReadColorRow(Reader: TReader); *)
 procedure TStringAlignGrid.ReadColorRow(Reader: TReader);
 begin
   ReadColorColRow(Reader,1);
   end;
-(*@\\\000000031B*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ReadFixedColorCol(Reader: TReader); *)
 procedure TStringAlignGrid.ReadFixedColorCol(Reader: TReader);
 begin
   ReadColorColRow(Reader,2);
   end;
-(*@\\\0000000401*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ReadFixedColorRow(Reader: TReader); *)
 procedure TStringAlignGrid.ReadFixedColorRow(Reader: TReader);
 begin
   ReadColorColRow(Reader,3);
   end;
-(*@\\\0000000401*)
+(*@\\\*)
 
 (*@/// procedure TStringAlignGrid.ReadColorColRow(Reader:TReader; kind: byte); *)
 procedure TStringAlignGrid.ReadColorColRow(Reader:TReader; kind: byte);
@@ -3947,8 +4356,8 @@ begin
     end;
   Reader.ReadListEnd;
   end;
-(*@\\\0000000A2B*)
-(*@\\\0000000301*)
+(*@\\\*)
+(*@\\\*)
 (*@/// Read and write several selected color lists to the DFM *)
 (*@/// procedure TStringAlignGrid.ReadSelColorCell(Reader: TReader); *)
 procedure TStringAlignGrid.ReadSelColorCell(Reader: TReader);
@@ -3975,7 +4384,7 @@ procedure TStringAlignGrid.ReadSelColorCol(Reader: TReader);
 begin
   FSaveSelColorCol:=ReadSelColorColRow(Reader,FSelColorCol);
   end;
-(*@\\\000000032F*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.ReadSelColorRow(Reader: TReader); *)
 procedure TStringAlignGrid.ReadSelColorRow(Reader: TReader);
 begin
@@ -4007,13 +4416,13 @@ procedure TStringAlignGrid.WriteSelColorCol(Writer: TWriter);
 begin
   WriteSelColorColRow(Writer, ColCount-1, FSelColorCol);
   end;
-(*@\\\0000000308*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.WriteSelColorRow(Writer: TWriter); *)
 procedure TStringAlignGrid.WriteSelColorRow(Writer: TWriter);
 begin
   WriteSelColorColRow(Writer, RowCount-1, FSelColorRow);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 
 { All the ReadCol, ReadRow are so similar, so these to routines are there
   to avoid code-copy }
@@ -4036,7 +4445,7 @@ begin
     end;
   Reader.ReadListEnd;
   end;
-(*@\\\000000012D*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.WriteSelColorColRow(Writer:TWriter; count:integer; list:TList); *)
 procedure TStringAlignGrid.WriteSelColorColRow(Writer:TWriter; count:integer; list:TList);
 var
@@ -4053,7 +4462,7 @@ begin
     end;
   Writer.WriteListEnd;
   end;
-(*@\\\0000000201*)
+(*@\\\*)
 (*@\\\*)
 (*@/// Read and write several selected font color lists to the DFM *)
 (*@/// procedure TStringAlignGrid.ReadSelFontColorCell(Reader: TReader); *)
@@ -4137,7 +4546,7 @@ begin
   temp:=colortorgb(c);
   result:=((temp and $ff) shl 16) or (temp and $ff00) or ((temp and $ff0000) shr 16);
   end;
-(*@\\\0000000601*)
+(*@\\\*)
 (*@/// function text2html(const s:string):string; *)
 function text2html(const s:string):string;
 var
@@ -4303,7 +4712,7 @@ if TMyFont(font).haschanged then begin
   if fsUnderline in font.style then
     String2Stream(result,'<u>');
   end;
-(*@\\\0000000201*)
+(*@\\\*)
         String2Stream(result,text2html(cells[ACol,ARow]));
 (*@///         if font.haschanged then close font data tags *)
 if TMyFont(font).haschanged then begin
@@ -4328,7 +4737,7 @@ if TMyFont(font).haschanged then begin
     end;
   String2Stream(result,'</table>'#13#10);
   end;
-(*@\\\0000002C1B*)
+(*@\\\*)
 (*@/// function TStringAlignGrid.Contents2CSV(data:TMemorystream; csv:char; range:TGridRect):TMemorystream; *)
 function TStringAlignGrid.Contents2CSV(data:TMemorystream; csv:char; range:TGridRect):TMemorystream;
 var
@@ -4350,7 +4759,7 @@ begin
     String2Stream(result,s+#13#10);
     end;
   end;
-(*@\\\0000001007*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.CSV2Contents(data:TStream; csv:char; range:TGridRect); *)
 procedure TStringAlignGrid.CSV2Contents(data:TStream; csv:char; range:TGridRect);
 var
@@ -4387,7 +4796,7 @@ begin
     h.free;
     end;
   end;
-(*@\\\0000000C0A*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.SaveToFile(const filename:string); *)
 procedure TStringAlignGrid.SaveToFile(const filename:string);
 var
@@ -4406,7 +4815,7 @@ begin
     data.free;
     end;
   end;
-(*@\\\0000001107*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.LoadFromFile(const filename:string); *)
 procedure TStringAlignGrid.LoadFromFile(const filename:string);
 var
@@ -4425,7 +4834,186 @@ begin
     data.free;
     end;
   end;
-(*@\\\0000001107*)
+(*@\\\*)
+
+(*@/// procedure TStringAlignGrid.Contents2CSVClipboard(csv:char; range:TGridRect); *)
+procedure TStringAlignGrid.Contents2CSVClipboard(csv:char; range:TGridRect);
+var
+  h: TMemorystream;
+begin
+  h:=NIL;
+  try
+    h:=TMemorystream.Create;
+    Contents2CSV(h,csv,range);
+    Stream2Clipboard(h,cf_text);
+  finally
+    h.free;
+    end;
+  end;
+(*@\\\000000091F*)
+(*@/// procedure TStringAlignGrid.ClipboardCSV2Contents(csv:char; range:TGridRect); *)
+procedure TStringAlignGrid.ClipboardCSV2Contents(csv:char; range:TGridRect);
+var
+  h: TMemorystream;
+begin
+  h:=NIL;
+  try
+    h:=TMemorystream.Create;
+    Clipboard2Stream(h,cf_text);
+    CSV2Contents(h,csv,range);
+  finally
+    h.free;
+    end;
+  end;
+(*@\\\000000081F*)
+
+(*@/// procedure TStringAlignGrid.CopyToClipboard; *)
+procedure TStringAlignGrid.CopyToClipboard;
+var
+  rect: TGridRect;
+begin
+  rect.left:=-1;
+  rect.right:=-1;
+  rect.top:=-1;
+  rect.bottom:=-1;
+  Contents2CSVClipboard(#7,rect);
+  end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.CopyFromClipboard; *)
+procedure TStringAlignGrid.CopyFromClipboard;
+var
+  rect: TGridRect;
+begin
+  rect.left:=-1;
+  rect.right:=-1;
+  rect.top:=-1;
+  rect.bottom:=-1;
+  ClipboardCSV2Contents(#7,rect);
+  end;
+(*@\\\*)
+(*@\\\0000000701*)
+(*@/// Sorting stuff *)
+{ The sorting itself - currently a simple Bubblesort }
+(*@/// procedure TStringAlignGrid.DoSort(ColRow,Min,Max: longint; ..) *)
+procedure TStringAlignGrid.DoSort(ColRow,Min,Max: longint; ByColumn,ascending: boolean);
+var
+  i,j,k: integer;
+begin
+  for i:=Min to Max-1 do begin
+    k:=i;
+    for j:=i+1 to Max do begin
+      if ByColumn then
+        case f_compare_col(self,ColRow,k,j) of
+          rel_equal: ;
+          rel_greater: if ascending then k:=j;
+          rel_less:    if not ascending then k:=j;
+          end
+      else
+        case f_compare_row(self,ColRow,k,j) of
+          rel_equal: ;
+          rel_greater: if ascending then k:=j;
+          rel_less:    if not ascending then k:=j;
+          end;
+      end;
+    if i<>k then begin
+      if ByColumn then
+        ExchangeRow(k,i)
+      else
+        ExchangeCol(k,i);
+      end;
+    end;
+  end;
+(*@\\\*)
+
+{ Some ready-made sorting functions }
+(*@/// function TStringAlignGrid.CompareColString(Sender: TObject; Column, Row1,Row2: longint):t_relation; *)
+function TStringAlignGrid.CompareColString(Sender: TObject; Column, Row1,Row2: longint):t_relation;
+begin
+  if false then
+  else if Cells[Column,Row1]=Cells[Column,Row2] then
+    result:=rel_equal
+  else if Cells[Column,Row1]>Cells[Column,Row2] then
+    result:=rel_greater
+  else
+    result:=rel_less;
+  end;
+(*@\\\*)
+(*@/// function TStringAlignGrid.CompareRowString(Sender: TObject; RowNr, Col1,Col2: longint):t_relation; *)
+function TStringAlignGrid.CompareRowString(Sender: TObject; RowNr, Col1,Col2: longint):t_relation;
+begin
+  if false then
+  else if Cells[Col1,RowNr]=Cells[Col2,RowNr] then
+    result:=rel_equal
+  else if Cells[Col1,RowNr]>Cells[Col2,RowNr] then
+    result:=rel_greater
+  else
+    result:=rel_less;
+  end;
+(*@\\\*)
+(*@/// function TStringAlignGrid.CompareColInteger(Sender: TObject; Column, Row1,Row2: longint):t_relation; *)
+function TStringAlignGrid.CompareColInteger(Sender: TObject; Column, Row1,Row2: longint):t_relation;
+var
+  v1,v2: longint;
+begin
+  try
+    v1:=strtoint(Cells[Column,Row1]);
+  except
+    v1:=0;
+    end;
+  try
+    v2:=strtoint(Cells[Column,Row2]);
+  except
+    v2:=0;
+    end;
+  if false then
+  else if v1=v2 then
+    result:=rel_equal
+  else if v1>v2 then
+    result:=rel_greater
+  else
+    result:=rel_less;
+  end;
+(*@\\\*)
+(*@/// function TStringAlignGrid.CompareRowInteger(Sender: TObject; RowNr, Col1,Col2: longint):t_relation; *)
+function TStringAlignGrid.CompareRowInteger(Sender: TObject; RowNr, Col1,Col2: longint):t_relation;
+var
+  v1,v2: longint;
+begin
+  try
+    v1:=strtoint(Cells[Col1,RowNr]);
+  except
+    v1:=0;
+    end;
+  try
+    v2:=strtoint(Cells[Col2,RowNr]);
+  except
+    v2:=0;
+    end;
+  if false then
+  else if v1=v2 then
+    result:=rel_equal
+  else if v1>v2 then
+    result:=rel_greater
+  else
+    result:=rel_less;
+  end;
+(*@\\\*)
+
+{ The procedures for the user to call }
+(*@/// procedure TStringAlignGrid.SortColumn(Column: longint; Ascending:boolean); *)
+procedure TStringAlignGrid.SortColumn(Column: longint; Ascending:boolean);
+begin
+  if not assigned(f_compare_col) then EXIT;
+  DoSort(Column,FixedRows,RowCount-1,true,Ascending);
+  end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.SortRow(RowNumber: longint; Ascending:boolean); *)
+procedure TStringAlignGrid.SortRow(RowNumber: longint; Ascending:boolean);
+begin
+  if not assigned(f_compare_row) then EXIT;
+  DoSort(RowNumber,FixedCols,ColCount-1,false,Ascending);
+  end;
+(*@\\\*)
 (*@\\\*)
 (*@/// Miscellaneous stuff *)
 (*@/// procedure TStringAlignGrid.ClearSelection; *)
@@ -4446,25 +5034,330 @@ begin
   result:= (ACol<FixedCols) or (ARow<FixedRows) or
            (ACol<f_FixedCols) or (ARow<f_FixedRows);
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// procedure TStringAlignGrid.NextEditableCell(var ACol,ARow:integer); *)
 procedure TStringAlignGrid.NextEditableCell(var ACol,ARow:integer);
+var
+  FCol,FRow: integer;
 begin
+  FCol:=ACol;
+  FRow:=ARow;
   repeat
-    inc(ACol);
-    if ACol>=ColCount then begin
-      ACol:=FixedCols;
-      inc(ARow);
-      end;
-    if ARow>=RowCount then begin
-      ACol:=-1;
-      ARow:=-1;
-      BREAK;
-      end;
-  until EditCell[ACol,ARow];
+    nextCell(f_nextcell_edit,f_lastcell_edit,ACol,ARow);
+    if (ACol=FCol) and (ARow=FRow) then  BREAK;   (* to avoid dead loop *)
+    if (ACol=-1) and (ARow=-1) then
+      BREAK;   (* add a new line ? jump to start ? or stay in cell ? *)
+    until EditCell[ACol,ARow]
   end;
 (*@\\\*)
-(*@\\\0000000201*)
+(*@/// procedure TStringAlignGrid.NextCell(direction:t_nextcell; ..); *)
+procedure TStringAlignGrid.NextCell(direction:t_nextcell;
+  LastCellBehaviour: t_lastcell; Var ACol,ARow:integer);
+begin
+  case direction of
+(*@///     nc_rightdown: *)
+nc_rightdown: begin
+  inc(ACol);
+  if ACol>=ColCount then begin
+    ACol:=FixedCols;
+    inc(ARow);
+    end;
+  if ARow>=RowCount then begin
+    ACol:=-1;
+    ARow:=-1;
+    end;
+  end;
+(*@\\\*)
+(*@///     nc_rightup: *)
+nc_rightup: begin
+  inc(ACol);
+  if ACol>=ColCount then begin
+    ACol:=FixedCols;
+    dec(ARow);
+    end;
+  if ARow<FixedRows then begin
+    ACol:=-1;
+    ARow:=-1;
+    end;
+  end;
+(*@\\\*)
+(*@///     nc_leftdown: *)
+nc_leftdown: begin
+  dec(ACol);
+  if ACol<FixedCols then begin
+    ACol:=ColCount-1;
+    inc(ARow);
+    end;
+  if ARow>=RowCount then begin
+    ACol:=-1;
+    ARow:=-1;
+    end;
+  end;
+(*@\\\*)
+(*@///     nc_leftup: *)
+nc_leftup: begin
+  dec(ACol);
+  if ACol<FixedCols then begin
+    ACol:=ColCount-1;
+    inc(ARow);
+    end;
+  if ARow<FixedRows then begin
+    ACol:=-1;
+    ARow:=-1;
+    end;
+  end;
+(*@\\\*)
+(*@///     nc_downright: *)
+nc_downright: begin
+  inc(ARow);
+  if ARow>=RowCount then begin
+    ARow:=FixedRows;
+    inc(ACol);
+    end;
+  if ACol>=ColCount then begin
+    ACol:=-1;
+    ARow:=-1;
+    end;
+  end;
+(*@\\\*)
+(*@///     nc_downleft: *)
+nc_downleft: begin
+  inc(ARow);
+  if ARow>=RowCount then begin
+    ARow:=FixedRows;
+    dec(ACol);
+    end;
+  if ACol<FixedCols then begin
+    ACol:=-1;
+    ARow:=-1;
+    end;
+  end;
+(*@\\\*)
+(*@///     nc_upleft: *)
+nc_upleft: begin
+  dec(ARow);
+  if ARow<FixedRows then begin
+    ARow:=RowCount-1;
+    dec(ACol);
+    end;
+  if ACol<FixedCols then begin
+    ACol:=-1;
+    ARow:=-1;
+    end;
+  end;
+(*@\\\*)
+(*@///     nc_upright: *)
+nc_upright: begin
+  dec(ARow);
+  if ARow<FixedRows then begin
+    ARow:=RowCount-1;
+    inc(ACol);
+    end;
+  if ACol>=ColCount then begin
+    ACol:=-1;
+    ARow:=-1;
+    end;
+  end;
+(*@\\\*)
+    end;
+  if (ACol=-1) and (ARow=-1) then
+    case LastCellBehaviour of
+(*@///       lc_first: *)
+lc_first:
+  case direction of
+    nc_rightdown,
+    nc_downright: begin  ACol:=FixedCols;  ARow:=FixedRows;  end;
+    nc_rightup,
+    nc_upright:   begin  ACol:=FixedCols;  ARow:=RowCount-1; end;
+    nc_leftdown,
+    nc_downleft:  begin  ACol:=ColCount-1; ARow:=FixedRows;  end;
+    nc_leftup,
+    nc_upleft:    begin  ACol:=ColCount-1; ARow:=RowCount-1; end;
+    end;
+(*@\\\*)
+      lc_stop:  ;
+(*@///       lc_newcolrow: *)
+lc_newcolrow:
+  case direction of
+(*@///     nc_rightdown: *)
+nc_rightdown:   begin
+  insertrow(RowCount);
+  ARow:=Rowcount-1;
+  ACol:=FixedCols;
+  end;
+(*@\\\*)
+(*@///     nc_leftdown: *)
+nc_leftdown:   begin
+  insertrow(RowCount);
+  ARow:=Rowcount-1;
+  ACol:=ColCount-1;
+  end;
+(*@\\\*)
+(*@///     nc_rightup: *)
+nc_rightup:   begin
+  insertrow(FixedRows);
+  ARow:=FixedRows;
+  ACol:=FixedCols;
+  end;
+(*@\\\*)
+(*@///     nc_leftup: *)
+nc_leftup:   begin
+  insertrow(FixedRows);
+  ARow:=FixedRows;
+  ACol:=ColCount-1;
+  end;
+(*@\\\*)
+(*@///     nc_downright: *)
+nc_downright:   begin
+  insertcol(ColCount);
+  ARow:=FixedRows;
+  ACol:=Colcount-1;
+  end;
+(*@\\\*)
+(*@///     nc_downleft: *)
+nc_downleft:   begin
+  insertcol(FixedCols);
+  ARow:=FixedRows;
+  ACol:=FixedCols;
+  end;
+(*@\\\*)
+(*@///     nc_upright: *)
+nc_upright:   begin
+  insertcol(ColCount);
+  ARow:=RowCount-1;
+  ACol:=ColCount-1;
+  end;
+(*@\\\*)
+(*@///     nc_upleft: *)
+nc_upleft:   begin
+  insertcol(FixedCols);
+  ARow:=RowCount-1;
+  ACol:=FixedCols;
+  end;
+(*@\\\*)
+    end;
+(*@\\\*)
+      end;
+  end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.WMChar(var Msg: TWMChar); *)
+procedure TStringAlignGrid.WMChar(var Msg: TWMChar);
+begin
+  if (goEditing in Options) and (Char(Msg.CharCode) in [^H, #32..#255]) then begin
+    ShowEditorChar(Char(Msg.CharCode));
+    if not Editormode then begin
+      { This is what an inherited inherited would have done if Object Pascal
+        would allow it }
+      if not DoKeyPress(Msg) then
+        { no further inherited } ;
+      end
+    end
+  else
+    inherited;
+end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.KeyDown(var Key: Word; Shift: TShiftState); *)
+procedure TStringAlignGrid.KeyDown(var Key: Word; Shift: TShiftState);
+var
+  ACol,ARow: integer;
+  FCol,FRow: integer;
+  direction: T_nextcell;
+begin
+  if key=vk_tab then begin
+    ACol:=Col;  ARow:=Row;
+    FCol:=Col;  FRow:=Row;
+    direction:=f_nextcell_tab;
+(*@///     if ssShift in Shift then  invert direction *)
+if ssShift in Shift then
+  case direction of
+    nc_rightdown:  direction:=nc_leftup;
+    nc_rightup:    direction:=nc_leftdown;
+    nc_leftdown:   direction:=nc_rightup;
+    nc_leftup:     direction:=nc_rightdown;
+    nc_downright:  direction:=nc_upleft;
+    nc_downleft:   direction:=nc_upright;
+    nc_upleft:     direction:=nc_downright;
+    nc_upright:    direction:=nc_downleft;
+    end;
+(*@\\\*)
+    repeat
+      NextCell(direction,f_lastcell_tab,ACol,ARow);
+      if (ACol=FCol) and (ARow=FRow) then  BREAK;   (* to avoid dead loop *)
+      if (ACol=-1) and (ARow=-1) then begin
+        ACol:=FCol;
+        ARow:=FRow;
+        BREAK;   (* add a new line ? jump to start ? or stay in cell ? *)
+        end;
+      until TabStops[ACol];
+    Col:=ACol; Row:=ARow;      (* why is Focuscell private? *)
+    key:=0;                    (* to avoid inherited making nonsense *)
+    end;
+  inherited KeyDown(Key, Shift);
+  end;
+(*@\\\*)
+
+(*@/// procedure TStringAlignGrid.ColWidthsChanged; *)
+procedure TStringAlignGrid.ColWidthsChanged;
+begin
+  inherited ColWidthsChanged;
+  if assigned(fwidthschanged) then  fwidthschanged(self);
+  end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.RowHeightsChanged; *)
+procedure TStringAlignGrid.RowHeightsChanged;
+begin
+  inherited RowHeightsChanged;
+  if assigned(fheightschanged) then  fheightschanged(self);
+  end;
+(*@\\\*)
+
+(*@/// procedure TStringAlignGrid.AdjustRowHeight(ARow:integer); *)
+procedure TStringAlignGrid.AdjustRowHeight(ARow:integer);
+var
+  h: longint;
+  ACol: longint;
+begin
+  if ARow>=RowCount then EXIT;
+  h:=0;
+  for ACol:=ColCount-1 downto 0 do begin
+    h:=max(h,textheight(ACol,ARow));
+    end;
+  RowHeights[ARow]:=h;
+  end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.AdjustColWidth(ACol:integer); *)
+procedure TStringAlignGrid.AdjustColWidth(ACol:integer);
+var
+  h: longint;
+  ARow: longint;
+begin
+  if ACol>=ColCount then EXIT;
+  h:=0;
+  for ARow:=RowCount-1 downto 0 do begin
+    h:=max(h,textwidth(ACol,ARow));
+    end;
+  ColWidths[ACol]:=h;
+  end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.AdjustRowHeights; *)
+procedure TStringAlignGrid.AdjustRowHeights;
+var
+  ARow: longint;
+begin
+  for ARow:=RowCount-1 downto 0 do
+    AdjustRowHeight(ARow);
+  end;
+(*@\\\*)
+(*@/// procedure TStringAlignGrid.AdjustColWidths; *)
+procedure TStringAlignGrid.AdjustColWidths;
+var
+  ACol: longint;
+begin
+  for ACol:=ColCount-1 downto 0 do
+    AdjustColWidth(ACol);
+  end;
+(*@\\\*)
+(*@\\\*)
 
 (*@/// The real action - the draw of a cell *)
 { the draw of a cell, is called from the Paint Method of TCustomGrid }
@@ -4486,8 +5379,8 @@ begin
   self.canvas.brush:=GetBrushCellComplete(ACol,ARow);
   Top:=Arect.Top+2;
 
-  if (gdSelected in AState) and (not (gdFocused in AState) or
-       ([goDrawFocusSelected, goRowSelect] * Options <> [])) then begin
+  if f_drawselect and ((gdSelected in AState) and (not (gdFocused in AState) or
+       ([goDrawFocusSelected, goRowSelect] * Options <> []))) then begin
     self.canvas.brush.color:=SelectedColorCell[Acol,ARow];
     self.canvas.font.color:=SelectedFontColorCell[Acol,ARow];
     end;
@@ -4524,7 +5417,7 @@ begin
     inc(top,h);
     end;
   end;
-(*@\\\0000001101*)
+(*@\\\*)
 var
   temp: TDrawCellEvent;
 begin
@@ -4538,9 +5431,54 @@ begin
   else
     inherited DrawCell(ACol, ARow, ARect, AState);
   end;
-(*@\\\0000000301*)
-(*@\\\0000000301*)
 (*@\\\*)
+
+(*@/// procedure TStringAlignGrid.CalcTextSize(ACol,ARow:integer; var Width,height: integer); *)
+procedure TStringAlignGrid.CalcTextSize(ACol,ARow:integer; var Width,height: integer);
+const
+  min_width = 4;
+  min_height = 4;
+var
+  h,l: integer;
+  s,t: string;
+begin
+  s:=Cells[ACol, ARow]+#13;
+  self.canvas.font:=GetFontCellComplete(ACol,ARow);
+  height:=min_height;
+  width:=0;
+  height:=0;
+  while pos(#13,s)<>0 do begin
+    t:=copy(s,1,pos(#13,s)-1);
+    l:=Canvas.TextWidth(t)+min_width;
+    h:=Canvas.TextHeight(t);
+    width:=max(width,l);
+    s:=copy(s,pos(#13,s)+1,length(s));
+    if (length(s)>0) and (s[1]=#10) then
+      s:=copy(s,2,length(s));
+    inc(height,h);
+    end;
+  if width<=min_width then width:=0;
+  if height<=min_height then height:=0;
+  end;
+(*@\\\*)
+(*@/// function TStringAlignGrid.textheight(ACol,ARow:integer):integer; *)
+function TStringAlignGrid.textheight(ACol,ARow:integer):integer;
+var
+  w: integer;
+begin
+  CalcTextSize(ACol,ARow,w,result);
+  end;
+(*@\\\*)
+(*@/// function TStringAlignGrid.textwidth(ACol,ARow:integer):integer; *)
+function TStringAlignGrid.textwidth(ACol,ARow:integer):integer;
+var
+  h: integer;
+begin
+  CalcTextSize(ACol,ARow,result,h);
+  end;
+(*@\\\*)
+(*@\\\*)
+(*@\\\0000001601*)
 (*@/// TGridComponentEditor = class(TComponentEditor) // The component editor *)
 { Some internal help routines for copying the internal lists }
 (*@/// function CopyAlignCell(Source,Target:TList; ColCount,RowCount:integer):boolean; *)
@@ -4654,7 +5592,7 @@ begin
         DisposeStr(w);
       end;
   end;
-(*@\\\0000000B01*)
+(*@\\\*)
 (*@/// function CopyFontCell(Source,Target:TList; ColCount,RowCount:integer; ...):boolean; *)
 function CopyFontCell(Source,Target:TList; ColCount,RowCount:integer;
   grid:TStringAlignGrid):boolean;
@@ -4680,7 +5618,7 @@ begin
         TFont(w).Free;
       end;
   end;
-(*@\\\0000001001*)
+(*@\\\*)
 (*@/// function CopyFontCol(Source,Target:TList; Count:integer; ...):boolean; *)
 function CopyFontCol(Source,Target:TList; Count:integer; grid:TStringAlignGrid):boolean;
 var
@@ -4704,7 +5642,7 @@ begin
       TFont(w).Free;
     end;
   end;
-(*@\\\0000000E01*)
+(*@\\\*)
 (*@/// function CopyBrushCell(Source,Target:TList; ColCount,RowCount:integer; ...):boolean; *)
 function CopyBrushCell(Source,Target:TList; ColCount,RowCount:integer;
   grid:TStringAlignGrid):boolean;
@@ -4730,7 +5668,7 @@ begin
         TBrush(w).Free;
       end;
   end;
-(*@\\\0000001023*)
+(*@\\\*)
 (*@/// function CopyBrushCol(Source,Target:TList; Count:integer; ...):boolean; *)
 function CopyBrushCol(Source,Target:TList; Count:integer; grid:TStringAlignGrid):boolean;
 var
@@ -4754,7 +5692,7 @@ begin
       TBrush(w).Free;
     end;
   end;
-(*@\\\0000000E21*)
+(*@\\\*)
 
 (*@/// procedure TGridComponentEditor.Edit;                          // OnCreate *)
 procedure TGridComponentEditor.Edit;
@@ -4814,7 +5752,7 @@ WITH grid do begin
   OnMouseDown:=self.MouseDown;
   Parent:=edit_form;
   end;
-(*@\\\0000000E01*)
+(*@\\\*)
 (*@///   create ok-button *)
 button:=TButton.Create(edit_form);
 WITH button do begin
@@ -4867,7 +5805,7 @@ for j:=0 to 2 do begin
     ]);
   edit_item[j]:=sub_item;
   end;
-(*@\\\0000000301*)
+(*@\\\*)
 (*@/// fonts *)
 for j:=0 to 4 do begin
   for i:=0 to 1 do begin
@@ -4909,7 +5847,7 @@ popup_menu:=NewPopupMenu(edit_form,'Popup',paleft,false,
    [ShowAlign,ShowFont,ShowColor,ShowEdit,
    ShowCells,ShowHints]
   );
-(*@\\\0000001301*)
+(*@\\\*)
 (*@///   Data source -> grid *)
 CopyAlignCell (source.FAlignCell,grid.FAlignCell,source.colcount,source.rowcount);
 CopyAlignCol  (source.FAlignCol ,grid.FAlignCol,source.colcount);
@@ -4936,7 +5874,7 @@ CopyBrushCol  (source.FBrushCol ,grid.FBrushCol,source.colcount,grid);
 CopyBrushCol  (source.FFBrushCol,grid.FFBrushCol,source.colcount,grid);
 CopyBrushCol  (source.FBrushRow ,grid.FBrushRow,source.rowcount,grid);
 CopyBrushCol  (source.FFBrushRow,grid.FFBrushRow,source.rowcount,grid);
-(*@\\\0000001901*)
+(*@\\\*)
   grid.ListToCells(grid.FCell);
   grid.f_fixedcols:=source.fixedcols;
   grid.f_fixedrows:=source.fixedrows;
@@ -4972,14 +5910,14 @@ source.FSaveBrushCol      :=CopyBrushCol  (grid.FBrushCol ,source.FBrushCol,sour
 source.FSaveFixedBrushCol :=CopyBrushCol  (grid.FFBrushCol,source.FFBrushCol,source.colcount,source);
 source.FSaveBrushRow      :=CopyBrushCol  (grid.FBrushRow ,source.FBrushRow,source.rowcount,source);
 source.FSaveFixedBrushRow :=CopyBrushCol  (grid.FFBrushRow,source.FFBrushRow,source.rowcount,source);
-(*@\\\0000000C01*)
+(*@\\\*)
     source.ListToCells(source.FCell);
     if GetParentForm(source).Designer<>NIL then
       GetParentForm(source).Designer.Modified;
     end;
   edit_form.Free;
   end;
-(*@\\\0000001E01*)
+(*@\\\*)
 (*@/// procedure TGridComponentEditor.AlignItem(Sender: TObject);    // MenuClick align *)
 procedure TGridComponentEditor.AlignItem(Sender: TObject);
 var
@@ -5035,7 +5973,7 @@ else if sender=ShowHints then begin
         end;
     end;
   end;
-(*@\\\0000000A01*)
+(*@\\\*)
 (*@/// procedure TGridComponentEditor.EditItem(Sender: TObject);     // MenuClick edit *)
 procedure TGridComponentEditor.EditItem(Sender: TObject);
 var
@@ -5066,7 +6004,7 @@ begin
         end;
       end;
   end;
-(*@\\\0000001C01*)
+(*@\\\*)
 (*@/// procedure TGridComponentEditor.FontItem(Sender: TObject);     // MenuClick font *)
 procedure TGridComponentEditor.FontItem(Sender: TObject);
 var
@@ -5109,7 +6047,7 @@ begin
         end;
       end;
   end;
-(*@\\\0000002901*)
+(*@\\\*)
 (*@/// procedure TGridComponentEditor.ColorItem(Sender: TObject);    // MenuClick color *)
 procedure TGridComponentEditor.ColorItem(Sender: TObject);
 var
@@ -5152,7 +6090,7 @@ begin
         end;
       end;
   end;
-(*@\\\0000000701*)
+(*@\\\*)
 (*@/// procedure TGridComponentEditor.MouseDown(Sender:TObject;..);  // OnPopup *)
 procedure TGridComponentEditor.MouseDown(Sender:TObject; Button:TMouseButton; Shift: TSHiftstate; X,Y:Integer);
 var
@@ -5194,7 +6132,7 @@ if alignment<>NIL then
     alLeft  : align_Items[0,2].checked:=true;
     alCenter: align_Items[0,3].checked:=true;
     end;
-(*@\\\0000000201*)
+(*@\\\*)
 for i:=1 to 4 do begin
   case i of
     1: begin
@@ -5225,7 +6163,7 @@ if alignment<>NIL then
     end;
 (*@\\\*)
   end;
-(*@\\\0000001507*)
+(*@\\\*)
 (*@///       Set editable checks *)
 (*@/// EditCell *)
 editable:=GetItemCell(ACol,ARow,grid.FEditCell);
@@ -5235,7 +6173,7 @@ if editable<>NIL then
     false: Edit_Items[0,1].checked:=true;
     true : Edit_Items[0,2].checked:=true;
     end;
-(*@\\\000000050C*)
+(*@\\\*)
 for i:=1 to 2 do begin
   case i of
     1: begin
@@ -5255,9 +6193,9 @@ if editable<>NIL then
     false: Edit_Items[i,1].checked:=true;
     true : Edit_Items[i,2].checked:=true;
     end;
-(*@\\\0000000618*)
+(*@\\\*)
   end;
-(*@\\\0000000D01*)
+(*@\\\*)
 (*@///       Set font checks *)
 font:=GetItemCell(ACol,ARow,grid.FFontCell);
 same:=(font=NIL) or not TMyFont(font).Haschanged;
@@ -5309,6 +6247,10 @@ color_Items[4,1].checked:=not same;
 { These are just a few help tools for the Application.OnShowHint and      }
 { Application.OnIdle methods - Borland didn't thought of the need to      }
 { put more than one method in these places, so I had to do it myself.     }
+{ At least there's a way to avoid this stuff with Delphi 2/3 with         }
+{ the cm_hintshow message which is sent just before the OnSHowHint event, }
+{ but as this stuff should work with any version of Delphi I stay with    }
+{ the event list...                                                       }
 { Some nice internals how to work with method pointer are presented here. }
 
 (*@/// TObjectList = class(TList)       // A list which frees it's objects *)
@@ -5391,7 +6333,7 @@ begin
       TShowHintEvent(TMethod(ShowHintProcs.Items[i]).methodpointer)(HintStr,CanShow,HintInfo);
       end;
   end;
-(*@\\\0000000517*)
+(*@\\\*)
 (*@/// procedure TDummyObject.DoIdle(sender: TObject; var done:Boolean); *)
 procedure TDummyObject.DoIdle(sender: TObject; var done:Boolean);
 var
@@ -5406,7 +6348,7 @@ begin
       end;
   end;
 (*@\\\*)
-(*@\\\0000000D01*)
+(*@\\\*)
 
 const
   Dummy: TDummyObject        =NIL;
@@ -5429,7 +6371,7 @@ begin
   result:=(T_Method(proc1).proc=T_Method(proc2).proc) and
           (T_Method(proc1).self=T_Method(proc2).self);
   end;
-(*@\\\0000000A01*)
+(*@\\\*)
 (*@/// Include and remove the Methodpointer from the according lists *)
 (*@/// procedure AddShowHintProc(proc:TShowHintEvent); *)
 procedure AddShowHintProc(proc:TShowHintEvent);
@@ -5442,7 +6384,7 @@ begin
   showhintprocs.add(method);
   Application.OnShowHint:=dummy.ShowHint;
   end;
-(*@\\\0000000601*)
+(*@\\\*)
 (*@/// procedure RemoveShowHintProc(proc:TShowHintEvent); *)
 procedure RemoveShowHintProc(proc:TShowHintEvent);
 var
@@ -5455,7 +6397,7 @@ begin
                       TMethodpointer(proc))  then
       showhintprocs.delete(i);
   end;
-(*@\\\0000000501*)
+(*@\\\*)
 (*@/// procedure AddIdleProc(proc:TIdleEvent); *)
 procedure AddIdleProc(proc:TIdleEvent);
 var
@@ -5467,7 +6409,7 @@ begin
   idleprocs.add(method);
   Application.OnIdle:=dummy.DoIdle;
   end;
-(*@\\\0000000501*)
+(*@\\\*)
 (*@/// procedure RemoveIdleProc(proc:TIdleEvent); *)
 procedure RemoveIdleProc(proc:TIdleEvent);
 var
@@ -5480,17 +6422,136 @@ begin
                       TMethodpointer(proc))  then
       idleprocs.delete(i);
   end;
-(*@\\\0000000501*)
-(*@\\\0000000120*)
-(*@\\\0000001601*)
+(*@\\\*)
+(*@\\\*)
+(*@\\\0000001A01*)
+(*@/// Generating HWnd's without the routines in forms *)
+{ Creating a new HWnd with a WndProc for an arbitrary class. Just the same   }
+{ as the routines in forms, but without the assembler stuff and using simple }
+{ TList's for the storage - maybe not as fast the original routines, but     }
+{ much easier to understand and to use. This is only for fun here as the     }
+{ routines in forms do absolutely the same, but this stuff may be used to    }
+{ create an console application without using forms but receiving Windows    }
+{ messages.                                                                  }
 
-(*@/// procedure DoneUnit;  // The cleanup of the unit *)
+
+const
+(*@///   UtilWindowClass: TWndClass = (...); *)
+UtilWindowClass: TWndClass = (
+  style: 0;
+  lpfnWndProc: @DefWindowProc;
+  cbClsExtra: 0;
+  cbWndExtra: 0;
+  hInstance: 0;
+  hIcon: 0;
+  hCursor: 0;
+  hbrBackground: 0;
+  lpszMenuName: nil;
+  lpszClassName: 'TAHUtilWindow');
+(*@\\\*)
+  WndProcs: TObjectList =NIL;
+  WndWnds: TList        =NIL;
+
+{ Converts a Windows WndProc (HWnd as parameter) to a Delphi method with }
+{ self as implicit first parameter by looking up the HWnd in the List    }
+(*@/// function AH_StdWndProc(Window: HWND; Message,WParam,LParam: Word/Longint); *)
+(*$ifdef ver80 *)
+function AH_StdWndProc(Window: HWND; Message: Longint; WParam: Word;
+  LParam: Longint): Longint; export;
+(*$else *)
+function AH_StdWndProc(Window: HWND; Message: Word; WParam: Longint;
+  LParam: Longint): Longint; stdcall;
+(*$endif *)
+var
+  p: integer;
+  m: TMessage;
+begin
+  m.msg:=message;
+  m.wparam:=wparam;
+  m.lparam:=lparam;
+  m.result:=0;
+  p:=wndwnds.indexof(pointer(window));
+  if p>=0 then
+    TWndProc(TMethod(wndprocs.Items[p]).methodpointer)(m);
+  result:=m.result;
+  end;
+(*@\\\*)
+{ Creates a new HWnd and link it with the given Method }
+(*@/// function AH_AllocateHWnd(Method: TWndProc): HWND; *)
+function AH_AllocateHWnd(Method: TWndProc): HWND;
+var
+  tempmethod: TMethod;
+  TempClass: TWndClass;
+begin
+  result:=0;
+  if (dummy=NIL) or (wndprocs=NIL) then exit;
+
+  UtilWindowClass.hInstance := HInstance;
+  if not GetClassInfo(HInstance, UtilWindowClass.lpszClassName, TempClass) then
+(*$ifdef ver80 *)
+    WinProcs.RegisterClass(UtilWindowClass);
+(*$else *)
+    Windows.RegisterClass(UtilWindowClass);
+(*$endif *)
+  Result := CreateWindow(UtilWindowClass.lpszClassName, '', 0,
+    0, 0, 0, 0, 0, 0, HInstance, nil);
+
+  tempmethod:=TMethod.Create;
+  tempmethod.methodpointer:=TMethodPointer(method);
+
+  { These two lists must be absolutely parallel, otherwise the messages may }
+  { go to the wrong object                                                  }
+  wndprocs.add(tempmethod);
+  wndwnds.add(pointer(result));
+
+  SetWindowLong(Result, GWL_WNDPROC, Longint(@AH_StdWndProc));
+end;
+(*@\\\*)
+{ Removes the HWnd both in Windows an in the internal lists }
+(*@/// procedure AH_DeallocateHWnd(Wnd: HWND); *)
+procedure AH_DeallocateHWnd(Wnd: HWND);
+var
+  p: integer;
+begin
+  DestroyWindow(Wnd);
+  p:=wndwnds.remove(pointer(Wnd));
+  if p>=0 then
+    wndprocs.delete(p);
+end;
+(*@\\\*)
+(*@\\\0000000901*)
+
+(*@/// procedure DoneUnit;  // The cleanup of the unit, called in finalization *)
 procedure DoneUnit; far;
 begin
+
+{ For design mode: relink the OnShowHint back to it's default value;   }
+{ only needed since with Delphi 3 packages the finalization may be     }
+{ called without Delphi itself is closed                               }
+
+  if (ShowHintProcs<>NIL) and
+     (ShowHintProcs.Count>0) then
+       Application.OnShowHint:=TShowHintEvent(TMethod(ShowHintProcs.Items[0]).methodpointer);
+
+{ The explicit removing of the list entries is needed since the delete method }
+{  of the TLIst isn't virtual an therefore not called by the Free             }
+  if ShowHintProcs<>NIL then
+    while ShowHintProcs.Count>0 do
+      ShowHintProcs.delete(0);
   ShowHintProcs.Free;
   ShowHintProcs:=NIL;
+  if IdleProcs<>NIL then
+    while IdleProcs.Count>0 do
+      IdleProcs.delete(0);
   IdleProcs.Free;
   IdleProcs:=NIL;
+  if WndProcs<>NIL then
+    while WndProcs.Count>0 do
+      WndProcs.delete(0);
+  WndProcs.Free;
+  WndProcs:=NIL;
+  WndWnds.Free;
+  WndWnds:=NIL;
   Dummy.Free;
   Dummy:=NIL;
   end;
@@ -5501,8 +6562,8 @@ begin
   RegisterComponents('Custom', [TStringAlignGrid]);
   RegisterComponentEditor(TStringAlignGrid,TGridComponentEditor);
   end;
+(*@\\\0000000401*)
 (*@\\\*)
-(*@\\\0000000B01*)
 (*@/// initialization *)
 var
   t:TShowHintEvent;
@@ -5515,11 +6576,13 @@ begin
   Dummy:=TDummyObject.Create;
   ShowHintProcs:=TObjectList.Create;
   IdleProcs:=TObjectList.Create;
+  WndProcs:=TObjectList.Create;
+  WndWnds:=TList.Create;
   t:=application.OnShowHint;
-  if assigned(t) then      { D1 can't do a assigned of a property }
-    AddShowHintProc(t);    { In design mode the OnShowHint is responsible
-                             for the hints of the component palette so I
-                             need to remember this }
+  if assigned(t) then      { D1 can't do a assigned of a property          }
+    AddShowHintProc(t);    { In design mode the OnShowHint is responsible  }
+                           { for the hints of the component palette so I   }
+                           { need to remember this                         }
 (*@\\\*)
 (*@/// finalization *)
 (*$ifdef ver80 *)
@@ -5529,6 +6592,6 @@ begin
 finalization
   DoneUnit;
 (*$endif *)
-(*@\\\0000000201*)
+(*@\\\*)
 end.
-(*@\\\0003000F01000011000F01*)
+(*@\\\0001000011*)
