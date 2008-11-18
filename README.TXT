@@ -1,50 +1,74 @@
-TStringAlignGrid  (Version 1.4 of 1994-03-07)
+TStringAlignGrid  (Version 1.5 of 1997-05-22)
 
-Descendant of TStringGrid with the possibility to change the alignment of
-the text to left (same as StringGrid) or right aligned or centered. You can
-change this for all cells of the grid with the property Alignment (also visible
-in the Object Inspector) or for each column with the AlignCol or FAlignCol (for
-the fixed cells) array. Finally you can set it for each cell alone with the
-AlignCell property. The possible values of these properties are alLeft,
-alRight and alCenter.
+Originally it was a descendant of TStringGrid with the possibility to change
+the alignment of the text to left (same as StringGrid) or right aligned or
+centered, but with newer versions many more features appeared but the name
+stayed (as there is already a TSuperGrid I've to stick to the name...)
 
-The value set in the (F)AlignCol property overrules the one set in Alignment,
-the same holds for the AlignCell property which overrules both the
-(F)AlignCell and the Alignment.
-To unset the value of an (F)AlignCol or AlignCell for any Col or Cell you can
-use the Reset(F)AlignCol and ResetAlignCell methods.
-If DefaultDrawing is set to false this component will behave exactly as a
-StringGrid with DefaultDrawing set to false, so this property is totally
-useless (it's just a problem of inheritance - you cannot unpublish a property
-so all descendents of the StringGrid have this property published).
 
-New in version 1.3 is a field similar to AlignCell named HintCell - as you may
-guess it is used to set a hint for each cell - but the default behaviour of
-one hint for the whole grid is therefore switched off, a hint only pops up
-if the hint for the respective cell is set. This all works only if you don't
-override the OnShowHint of the Application...
+For the quick use: move the PAS and DCR file into your component path and
+include it in your library. You can then just drop it onto your forms and set
+all the needed properties with the component editor (just double-click the
+grid). If you're using Delphi 1 be sure to use the DCR file in the
+subdirectory 16 as the one in the main directory is a 32bit one.
 
-Version 1.4 addes a FontCell etc. for setting the font the same way as the
-alignments. I greatly improved the OnHintCell with much easier to use
-functions (although normally everything is done automagically by the grid).
-Additional to the Column properties I also added Row properties, with the
-following hierachy: first comes the Cell, then the Column, then the Rows and
-finally the global one. And then there's now a Component Editor which allows
-you to set nearly every property of the grid (except the Fonts, but I'm
-working on it) with just a few mouse clicks. Now you can also edit the
-grid cells on design time!
 
-What's missing: I haven't made the DCR-File (the one containing the icon for
-the component library) in a 32bit version, so in D2 you'll see the icon of
-the normal TStringGrid instead. The fonts are not editable at design time
-due to some problems with the internals of reading/writing data in the DFM
-files. And finally there seems to be a bug with the hints in D2, they only
-appear in the upper left corner of the grid - I'll crawl through the VCL
-to trace this ASAP.
+The more advanced use: here is the description of the new properties and
+methods the component offers. If there are several settings which would have
+an impact on a specific cell they always follow the hierachy 1. cell 2. column
+3. row 4. global; so any cell specific setting is always used, and only if no
+cell, column and row specific setting is found the global one is used.
+
+HintCell[Col,Row]         the hint strings for each cell
+ShowCellHints             show hints cell specific or for the whole grid
+
+Alignment                 the global alignment for the cell texts
+AlignCell[Col,Row]        the alignment for a specific cell
+AlignCol/FixAlignCol[Col] the alignment for a column (normal or fixed)
+AlignRow/FixAlignRow[Row] the alignment for a row (normal or fixed)
+                          possible values: alLeft, alRight, alCenter
+
+ColorCell[Col,Row]        the background color for a specific cell
+ColorCol/FixColorCol[Col] the background color for a column (normal or fixed)
+ColorRow/FixColorRow[Row] the background color for a row (normal or fixed)
+
+CellFont[Col,Row]         the font for a specific cell
+ColFont/FixedColFont[Col] the font for a column (normal or fixed)
+RowFont/FixedRowFont[Row] the font for a row (normal or fixed)
+
+the following are to set a value back to the default value so a setting in a
+lower level of the hierachy can take effect
+
+ResetFontCell(Col,ARow)   reset the font for the cell
+ResetFontCol(Col)         reset the font for the column
+ResetFontFixedCol(Col)    reset the font for the fixed column
+ResetFontRow(Row)         reset the font for the row
+ResetFontFixedRow(Row)    reset the font for the fixed row
+
+and just the same way the ResetAlign... and ResetColor... methods.
+
+RemoveCol(Col)
+RemoveRow(Row)
+InsertCol(Col)
+InsertRow(Row)            guess what: to remove and add a column or row
+
+And for the expert: try to crawl through the code. I tried to comment at least
+the most important parts, so maybe you could get some ideas from it.
+If you wonder about the strange comment lines - they are added by the text
+editor I use, to fold the code and make it much easier to overlook.
+
+
+Acknowledgements:
+there are some people who helped on developing this component -either by
+sending bug reports, requesting new features, or by putting some code into
+the public which was incoporated into this. I just list the names here:
+ Jaap Bakker, Roland Hartmann, Steve Jordi, Paul B. Klerlein, James Sager
+
 
 If you spot any bug, have any idea how to improve, want to let me know what a
-great job I did :-), use any part of this component for your own one or
-anything else, you can mail me at (note the new address):
+great job I did :-), want to notify me of the use any part of this component
+for your own one, want to hear from me when I throw something into the public,
+or for any other reason, you can mail me:
 
 ah@scp.de
 andy@farpoint.westend.de
@@ -55,6 +79,7 @@ snail mail: Andreas H"orstemeier
             Germany
 
 ["o means the umlaut o, that is an o with two dots above]
+
 
 This component is Public Domain, but if you want to send me money I won't
 complain :-) You are free to put this component on a CD-ROM, but if you do
