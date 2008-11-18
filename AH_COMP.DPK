@@ -1,7 +1,7 @@
 package ah_comp;
 
 {$R *.RES}
-{$R 'Aligrid.dcr'}
+{$R 'Aligrid.d32'}
 {$ALIGN ON}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
@@ -26,11 +26,20 @@ package ah_comp;
 {$DESCRIPTION 'Andreas Hörstemeier''s components'}
 {$DESIGNONLY}
 {$IMPLICITBUILD ON}
+  (*$i ah_def.inc *)
 
 requires
+(*$ifdef delphi_3 *)
   Vcl30;
+(*$endif *)
+(*$ifdef delphi_4 *)
+  Vcl40;
+(*$endif *)
+(*$ifdef delphi_5 *)
+  Vcl50;
+(*$endif *)
 
 contains
-  Aligrid;
+  Aligridr;
 
 end.
