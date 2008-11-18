@@ -1,7 +1,9 @@
-TStringAlignGrid V1.1 - Komponente fuer
+TStringAlignGrid V1.4 - Komponente fuer
 Borland Delphi. Nachkomme des TStringGrid
-mit der Moeglichkeit, Zellen einzeln, 
-spaltenweise oder global links-, 
-rechtsbuendig oder zentriert darzustellen.
+mit der Moeglichkeit, Zellen einzeln,
+spaltenweise oder global links-,
+rechtsbuendig oder zentriert darzustellen;
+Hints fuer einzelne Zellen; Fonts fuer
+einzelne Zellen/Spalten/Zeilen.
 Autor: Andreas Hoerstemeier
-
+

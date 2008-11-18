@@ -1,4 +1,4 @@
-TStringAlignGrid  (Version 1.1 vom 1996-97-03)
+TStringAlignGrid  (Version 1.4 vom 1997-03-07)
 
 Nachkomme von TStringGrid mit der Möglichkeit, den Zelleninhalt rechts- oder
 linksbündig oder zentriert anzeigen zu lassen. Dieses kann entweder global für
@@ -20,12 +20,32 @@ genau wie ein normales StringGrid mit DefaultDrawing falsch - eigentlich für
 diese Komponente unsinnig (ein Problem der Vererbung - eine einmal
 veröffentlichte Eigenschaft kann von Nachfolgern nicht mehr versteckt werden).
 
+In Version 1.3 ist die Möglichkeit hinzugekommen, für jede Zelle einen eigenen
+Hint zu definieren. Da hierzu die Variable OnShowHint von Application
+überschrieben werden mußte, kann es zu Problemen kommen, wenn eine andere
+Komponente ebenfalls damit arbeiten will - anstelle einer Variable wäre eine
+Liste besser gewesen.
+
+Mit Version 1.4 ist die Verwaltung der OnShowHints nochmals deutlich
+verbessert worden. Neu ist die Möglichkeit, wie bei den Alignments Fonts pro
+Zelle oder Spalte zu definieren; und zusätzlich (auch für die Alignments)
+jetzt auch für Zeilen - die Hierachie ist Zelle-Spalte-Zeile-Global.
+Und endlich gibt es auch einen Komponenten-Editor, mit dem (außer den Fonts)
+alle Eigenschaften bequem zur Design-Zeit eingestellt werden können, neben
+meinen Eigenschaften auch die dargestellten Strings!
+
+Was fehlt noch? Fonts im Komponenteneditor - da habe ich noch Probleme mit den
+Internas des Lesens/Schreibens der Daten in das DFM-File; das Icon für die
+Komponentenbibliothek ist noch nur in 16bit verfügbar; und anscheinend
+funktioniert unter Delphi2 das Anzeigen der Hints nur in der linken oberen
+Ecke des Grids.
+
 Für Bugreports, Verbesserungsideen, Lob- and Dankesmails etc. bin ich
 zu erreichen unter (neue Anschrift und email!):
 
 ah@scp.de
-andy@farpoint.sauerland.de
-fido: 2:2444/4505.3
+andy@farpoint.westend.de
+http://www.westend.de/~hoerstemeier
 gelbe Post: Andreas Hörstemeier
             Mefferdatisstraße 16-18
             52062 Aachen
@@ -33,8 +53,8 @@ gelbe Post: Andreas Hörstemeier
 
 Diese Komponente ist Public Domain, aber falls Sie mir dennoch Geld dafür
 geben wollen würde ich mich natürlich nicht beschweren. Diese Komponente
-darf auf CD-ROM's veröffentlich werden, nur möchte ich dann ein Exemplar
-der CD zugeschickt bekommen. Natürlich darf sie nur komplett mit der
-Dokumentation weitergegeben werden.
+darf auf CD-ROM's veröffentlich werden, nur möchte ich darum bitten, dann
+ein Exemplar der CD zugeschickt bekommen. Natürlich darf sie nur komplett
+mit der Dokumentation und allen Sourcen weitergegeben werden.
 
 Andreas Hörstemeier
