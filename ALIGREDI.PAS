@@ -22,7 +22,12 @@ uses
   Forms,
   Dialogs,
   Grids,
+  (*$ifdef delphi_ge_6 *)
+  designintf,
+  designeditors,
+  (*$else *)
   dsgnintf,
+  (*$endif *)
   stdctrls,
   buttons,
   Spin,

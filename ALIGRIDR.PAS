@@ -5,7 +5,11 @@ interface
 
 uses
   classes,
+  (*$ifdef delphi_ge_6 *)
+  designintf,
+  (*$else *)
   dsgnintf,
+  (*$endif *)
   aligrid,
   aligredi;
 
@@ -22,6 +26,15 @@ implementation
 
 (*@/// procedure Register;  // To display the grid in the IDE *)
 procedure Register;
+(*$ifdef delphi_ge_6 *)
+const
+  TInputCategory = 'Input';
+  TVisualCategory = 'Visual';
+  TLocalizableCategory = 'Localizable';
+  THelpCategory = 'Help and Hints';
+  TActionCategory = 'Action';
+  TMiscellaneousCategory = 'Miscellaneous';
+(*$endif *)
 begin
   RegisterComponents('Custom', [TStringAlignGrid]);
   RegisterComponentEditor(TStringAlignGrid,TGridComponentEditor);
@@ -45,7 +58,7 @@ begin
      'NextCellTab','AfterLastCellTab']);
 (*$endif *)
   end;
-(*@\\\003C000C01000C01000D07000D18*)
+(*@\\\003E000C01000C01000D07000D18000701000701*)
 (*@\\\0000000901*)
 end.
-(*@\\\0003000401000011000401*)
+(*@\\\0001000011000401*)

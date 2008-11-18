@@ -1,8 +1,7 @@
 package ah_comp;
 
-{$R *.RES}
-{$R 'Aligrid.d32'}
-{$ALIGN ON}
+{$R *.res}
+{$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}
 {$DEBUGINFO ON}
@@ -15,31 +14,22 @@ package ah_comp;
 {$OPTIMIZATION ON}
 {$OVERFLOWCHECKS OFF}
 {$RANGECHECKS OFF}
-{$REFERENCEINFO OFF}
+{$REFERENCEINFO ON}
 {$SAFEDIVIDE OFF}
 {$STACKFRAMES OFF}
 {$TYPEDADDRESS OFF}
 {$VARSTRINGCHECKS ON}
-{$WRITEABLECONST ON}
+{$WRITEABLECONST OFF}
 {$MINENUMSIZE 1}
-{$IMAGEBASE $00400000}
-{$DESCRIPTION 'Andreas Hörstemeier''s components'}
-{$DESIGNONLY}
-{$IMPLICITBUILD ON}
-  (*$i ah_def.inc *)
+{$IMAGEBASE $400000}
+{$IMPLICITBUILD OFF}
 
 requires
-(*$ifdef delphi_3 *)
-  Vcl30;
-(*$endif *)
-(*$ifdef delphi_4 *)
-  Vcl40;
-(*$endif *)
-(*$ifdef delphi_5 *)
-  Vcl50;
-(*$endif *)
+  rtl,
+  designide,
+  VclSmp;
 
 contains
-  Aligridr;
+  aligridr in 'S:\andy\ALIGRIDR.PAS';
 
 end.

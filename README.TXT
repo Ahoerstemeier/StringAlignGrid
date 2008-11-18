@@ -1,4 +1,4 @@
-TStringAlignGrid  (Version 2.0 of 2000-02-12)
+TStringAlignGrid  (Version 2.1 of 2001-07-09)
 
 Originally it was a descendant of TStringGrid with the possibility to change
 the alignment of the text to left (same as StringGrid) or right aligned or
@@ -16,7 +16,7 @@ also a package file, which only includes this one component, just load this
 file in Delphi and select "Install package" - but you can of course add this
 component to any other package you like, too, by using the aligridr.pas file.
 
-This component is Public Domain. If you like it you can send me a thank you
+This component is Freeware. If you like it you can send me a thank you
 on a nice postcard from your hometown, but if you really want to send me
 money I won't complain :-) , but count it as a gift not a payment. If you use
 this component in one of your projects I'd appreciate it if you mention me

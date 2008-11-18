@@ -1,5 +1,5 @@
 unit ah_tool;
-{ Copyright 1995-200 Andreas Hörstemeier            Version 1.0 2000-02-12   }
+{ Copyright 1995-200 Andreas Hörstemeier            Version 1.1 2001-06-04   }
 { this utility functions are public domain. They are used by several of my   }
 { components. In case you have several version of this file always use the   }
 { latest one. Please check the file readme.txt of the component you found    }
@@ -41,7 +41,7 @@ procedure setlength(var s:string; l: byte);
 
 { Write a string into a stream }
 procedure String2Stream(stream:TMemorystream; const s:string);
-(*@\\\0000000B12*)
+(*@\\\0000001101*)
 
 { The offset to UTC/GMT in minutes of the local time zone }
 function TimeZoneBias:longint;
@@ -75,8 +75,15 @@ procedure Stream2Clipboard(stream:TStream; format:integer);
 procedure Clipboard2Stream(stream:TStream; format:integer);
 (*@\\\*)
 
+(*@/// Windows Resources and Languages *)
+(*$ifdef delphi_gt_1 *)
+function LoadStrEx(id:word; languageid: word):string;
+(*$endif *)
+function LoadStr(id:word):string;
+(*@\\\*)
+
 function ScrollBarVisible(control: TWinControl; vertical: boolean):boolean;
-(*@\\\0000002301*)
+(*@\\\0000002501*)
 (*@/// implementation *)
 implementation
 
@@ -305,30 +312,30 @@ begin
   end;
 (*@\\\*)
 type    (* stolen from windows.pas *)
-(*@///   TSystemTime = record ... end; *)
-PSystemTime = ^TSystemTime;
-TSystemTime = record
-  wYear: Word;
-  wMonth: Word;
-  wDayOfWeek: Word;
-  wDay: Word;
-  wHour: Word;
-  wMinute: Word;
-  wSecond: Word;
-  wMilliseconds: Word;
-end;
-(*@\\\*)
-(*@///   TTimeZoneInformation = record ... end; *)
-TTimeZoneInformation = record
-  Bias: Longint;
-  StandardName: array[0..31] of word;  (* wchar *)
-  StandardDate: TSystemTime;
-  StandardBias: Longint;
-  DaylightName: array[0..31] of word;  (* wchar *)
-  DaylightDate: TSystemTime;
-  DaylightBias: Longint;
+  (*@/// TSystemTime = record ... end; *)
+  PSystemTime = ^TSystemTime;
+  TSystemTime = record
+    wYear: Word;
+    wMonth: Word;
+    wDayOfWeek: Word;
+    wDay: Word;
+    wHour: Word;
+    wMinute: Word;
+    wSecond: Word;
+    wMilliseconds: Word;
   end;
-(*@\\\*)
+  (*@\\\*)
+  (*@/// TTimeZoneInformation = record ... end; *)
+  TTimeZoneInformation = record
+    Bias: Longint;
+    StandardName: array[0..31] of word;  (* wchar *)
+    StandardDate: TSystemTime;
+    StandardBias: Longint;
+    DaylightName: array[0..31] of word;  (* wchar *)
+    DaylightDate: TSystemTime;
+    DaylightBias: Longint;
+    end;
+  (*@\\\*)
 var
   tz_info: TTimeZoneInformation;
   LL32:function (LibFileName: PChar; handle: longint; special: longint):Longint;
@@ -345,90 +352,90 @@ begin
   @FL32:=GetProcAddress(hdll,'FreeLibrary32W');
   @GA32:=GetProcAddress(hdll,'GetProcAddress32W');
   @CP32:=GetProcAddress(hdll,'CallProc32W');
-(*@///   if possible then   call GetTimeZoneInformation via Thunking *)
-if (@LL32<>NIL) and
-   (@FL32<>NIL) and
-   (@GA32<>NIL) and
-   (@CP32<>NIL) then begin
-  hDll32:=LL32('kernel32.dll',dummy,1);            { get the 32bit handle of kernel32 }
-  farproc:=GA32(hDll32,'GetTimeZoneInformation');  { get the 32bit adress of the function }
-  case CP32(tz_info,farproc,1,1) of                { and call it }
-    1: result:=tz_info.StandardBias+tz_info.Bias;
-    2: result:=tz_info.DaylightBias+tz_info.Bias;
-    else result:=0;
-    end;
-  FL32(hDll32);                                    { and free the 32bit dll }
-  end
-(*@\\\*)
-(*@///   else  calculate the bias out of the TZ environment variable *)
-else begin
-  s:=GetEnvVar('TZ');
-  while (length(s)>0) and (not(s[1] in ['+','-','0'..'9'])) do
-    s:=copy(s,2,length(s));
-  case s[1] of
-(*@///     '+': *)
-'+': begin
-  sign:=1;
-  s:=copy(s,2,length(s));
-  end;
-(*@\\\*)
-(*@///     '-': *)
-'-': begin
-  sign:=-1;
-  s:=copy(s,2,length(s));
-  end;
-(*@\\\*)
-    else sign:=1;
-    end;
-  try
-    result:=strtoint(copy(s,1,2))*60;
-    s:=copy(s,3,length(s));
-  except
-    try
-      result:=strtoint(s[1])*60;
+  (*@/// if possible then   call GetTimeZoneInformation via Thunking *)
+  if (@LL32<>NIL) and
+     (@FL32<>NIL) and
+     (@GA32<>NIL) and
+     (@CP32<>NIL) then begin
+    hDll32:=LL32('kernel32.dll',dummy,1);            { get the 32bit handle of kernel32 }
+    farproc:=GA32(hDll32,'GetTimeZoneInformation');  { get the 32bit adress of the function }
+    case CP32(tz_info,farproc,1,1) of                { and call it }
+      1: result:=tz_info.StandardBias+tz_info.Bias;
+      2: result:=tz_info.DaylightBias+tz_info.Bias;
+      else result:=0;
+      end;
+    FL32(hDll32);                                    { and free the 32bit dll }
+    end
+  (*@\\\*)
+  (*@/// else  calculate the bias out of the TZ environment variable *)
+  else begin
+    s:=GetEnvVar('TZ');
+    while (length(s)>0) and (not(s[1] in ['+','-','0'..'9'])) do
       s:=copy(s,2,length(s));
-    except
-      result:=0;
+    case s[1] of
+      (*@/// '+': *)
+      '+': begin
+        sign:=1;
+        s:=copy(s,2,length(s));
+        end;
+      (*@\\\*)
+      (*@/// '-': *)
+      '-': begin
+        sign:=-1;
+        s:=copy(s,2,length(s));
+        end;
+      (*@\\\*)
+      else sign:=1;
       end;
-    end;
-(*@///   if s[1]=':' then    minutes offset *)
-if s[1]=':' then begin
-  try
-    result:=result+strtoint(copy(s,2,2));
-    s:=copy(s,4,length(s));
-  except
     try
-      result:=result+strtoint(s[2]);
+      result:=strtoint(copy(s,1,2))*60;
       s:=copy(s,3,length(s));
     except
+      try
+        result:=strtoint(s[1])*60;
+        s:=copy(s,2,length(s));
+      except
+        result:=0;
+        end;
       end;
-    end;
-  end;
-(*@\\\*)
-(*@///   if s[1]=':' then    seconds offset - ignored *)
-if s[1]=':' then begin
-  try
-    strtoint(copy(s,2,2));
-    s:=copy(s,4,length(s));
-  except
-    try
-      strtoint(s[2]);
-      s:=copy(s,3,length(s));
-    except
+    (*@/// if s[1]=':' then    minutes offset *)
+    if s[1]=':' then begin
+      try
+        result:=result+strtoint(copy(s,2,2));
+        s:=copy(s,4,length(s));
+      except
+        try
+          result:=result+strtoint(s[2]);
+          s:=copy(s,3,length(s));
+        except
+          end;
+        end;
       end;
+    (*@\\\*)
+    (*@/// if s[1]=':' then    seconds offset - ignored *)
+    if s[1]=':' then begin
+      try
+        strtoint(copy(s,2,2));
+        s:=copy(s,4,length(s));
+      except
+        try
+          strtoint(s[2]);
+          s:=copy(s,3,length(s));
+        except
+          end;
+        end;
+      end;
+    (*@\\\*)
+    result:=result*sign;
+    (*@/// if length(s)>0 then daylight saving activated, calculate it *)
+    if length(s)>0 then begin
+      (* forget about the few hours on the start/end day *)
+      if (now>daylight_start) and (now<DayLight_End+1) then
+        result:=result-60;
+      end;
+    (*@\\\*)
     end;
-  end;
-(*@\\\*)
-  result:=result*sign;
-(*@///   if length(s)>0 then daylight saving activated, calculate it *)
-if length(s)>0 then begin
-  (* forget about the few hours on the start/end day *)
-  if (now>daylight_start) and (now<DayLight_End+1) then
-    result:=result-60;
-  end;
-(*@\\\*)
-  end;
-(*@\\\*)
+  (*@\\\*)
   end;
 (*@\\\0000001C01*)
 (*@/// 32 bit way: API call GetTimeZoneInformation *)
@@ -455,109 +462,109 @@ begin
   result:='';
   for i:=1 to length(s) do begin
     case s[i] of
-(*@///       iso latin 1 *)
-(*$ifdef iso_latin1 *)
-      '&' : t:='&amp;';
-      '<' : t:='&lt;';
-      '>' : t:='&gt;';
-      #160: t:='&nbsp;';
-      '¡' : t:='&iexcl;';
-      '¢' : t:='&cent;';
-      '£' : t:='&pound;';
-      '¤' : t:='&curren;';   (* &euro; ??? *)
-      '¥' : t:='&yen;';
-      '¦' : t:='&brvbar;';
-      '§' : t:='&sect;';
-      '¨' : t:='&uml;';
-      '©' : t:='&copy;';
-      'ª' : t:='&ordf;';
-      '«' : t:='&laquo;';
-      '¬' : t:='&not;';
-      '­' : t:='&shy;';
-      '®' : t:='&reg;';
-      '¯' : t:='&macr;';
-      '°' : t:='&deg;';
-      '±' : t:='&plusmn;';
-      '²' : t:='&sup2;';
-      '³' : t:='&sup3;';
-      '´' : t:='&acute;';
-      'µ' : t:='&micro;';
-      '¶' : t:='&para;';
-      '·' : t:='&middot;';
-      '¸' : t:='&cedille;';
-      '¹' : t:='&sup1;';
-      'º' : t:='&ordm;';
-      '»' : t:='&raquo;';
-      '¼' : t:='&frac14;';
-      '½' : t:='&frac12;';
-      '¾' : t:='&frac34;';
-      '¿' : t:='&iquest;';
-      'À' : t:='&Agrave;';
-      'Á' : t:='&Aacute;';
-      'Â' : t:='&Acirc;';
-      'Ã' : t:='&Atilde;';
-      'Ä' : t:='&Auml;';
-      'Å' : t:='&Aring;';
-      'Æ' : t:='&AElig;';
-      'Ç' : t:='&Ccedil;';
-      'È' : t:='&Egrave;';
-      'É' : t:='&Eacute;';
-      'Ê' : t:='&Ecirc;';
-      'Ë' : t:='&Euml;';
-      'Ì' : t:='&Igrave;';
-      'Í' : t:='&Iacute;';
-      'Î' : t:='&Icirc;';
-      'Ï' : t:='&Iuml;';
-      'Ð' : t:='&ETH;';
-      'Ñ' : t:='&Ntilde;';
-      'Ò' : t:='&Ograve;';
-      'Ó' : t:='&Oacute;';
-      'Ô' : t:='&Ocirc;';
-      'Õ' : t:='&Otilde;';
-      'Ö' : t:='&Ouml;';
-      '×' : t:='&times;';
-      'Ø' : t:='&Oslash;';
-      'Ù' : t:='&Ugrave;';
-      'Ú' : t:='&Uacute;';
-      'Û' : t:='&Ucirc;';
-      'Ü' : t:='&Uuml;';
-      'Ý' : t:='&Yacute;';
-      'Þ' : t:='&THORN;';
-      'ß' : t:='&szlig;';
-      'à' : t:='&agrave;';
-      'á' : t:='&aacute;';
-      'â' : t:='&acirc;';
-      'ã' : t:='&atilde;';
-      'ä' : t:='&auml;';
-      'å' : t:='&aring;';
-      'æ' : t:='&aelig;';
-      'ç' : t:='&ccedil;';
-      'è' : t:='&egrave;';
-      'é' : t:='&eacute;';
-      'ê' : t:='&ecirc;';
-      'ë' : t:='&euml;';
-      'ì' : t:='&igrave;';
-      'í' : t:='&iacute;';
-      'î' : t:='&icirc;';
-      'ï' : t:='&iuml;';
-      'ð' : t:='&eth;';
-      'ñ' : t:='&ntilde;';
-      'ò' : t:='&ograve;';
-      'ó' : t:='&oacute;';
-      'ô' : t:='&ocirc;';
-      'õ' : t:='&otilde;';
-      'ö' : t:='&ouml;';
-      '÷' : t:='&divide;';
-      'ø' : t:='&oslash;';
-      'ù' : t:='&ugrave;';
-      'ú' : t:='&uacute;';
-      'û' : t:='&ucirc;';
-      'ü' : t:='&uuml;';
-      'ý' : t:='&yacute;';
-      'þ' : t:='&thorn;';
-      #255: t:='&yuml;';
-(*$endif *)
-(*@\\\000000650C*)
+      (*@/// iso latin 1 *)
+      (*$ifdef iso_latin1 *)
+            '&' : t:='&amp;';
+            '<' : t:='&lt;';
+            '>' : t:='&gt;';
+            #160: t:='&nbsp;';
+            '¡' : t:='&iexcl;';
+            '¢' : t:='&cent;';
+            '£' : t:='&pound;';
+            '¤' : t:='&curren;';   (* &euro; ??? *)
+            '¥' : t:='&yen;';
+            '¦' : t:='&brvbar;';
+            '§' : t:='&sect;';
+            '¨' : t:='&uml;';
+            '©' : t:='&copy;';
+            'ª' : t:='&ordf;';
+            '«' : t:='&laquo;';
+            '¬' : t:='&not;';
+            '­' : t:='&shy;';
+            '®' : t:='&reg;';
+            '¯' : t:='&macr;';
+            '°' : t:='&deg;';
+            '±' : t:='&plusmn;';
+            '²' : t:='&sup2;';
+            '³' : t:='&sup3;';
+            '´' : t:='&acute;';
+            'µ' : t:='&micro;';
+            '¶' : t:='&para;';
+            '·' : t:='&middot;';
+            '¸' : t:='&cedille;';
+            '¹' : t:='&sup1;';
+            'º' : t:='&ordm;';
+            '»' : t:='&raquo;';
+            '¼' : t:='&frac14;';
+            '½' : t:='&frac12;';
+            '¾' : t:='&frac34;';
+            '¿' : t:='&iquest;';
+            'À' : t:='&Agrave;';
+            'Á' : t:='&Aacute;';
+            'Â' : t:='&Acirc;';
+            'Ã' : t:='&Atilde;';
+            'Ä' : t:='&Auml;';
+            'Å' : t:='&Aring;';
+            'Æ' : t:='&AElig;';
+            'Ç' : t:='&Ccedil;';
+            'È' : t:='&Egrave;';
+            'É' : t:='&Eacute;';
+            'Ê' : t:='&Ecirc;';
+            'Ë' : t:='&Euml;';
+            'Ì' : t:='&Igrave;';
+            'Í' : t:='&Iacute;';
+            'Î' : t:='&Icirc;';
+            'Ï' : t:='&Iuml;';
+            'Ð' : t:='&ETH;';
+            'Ñ' : t:='&Ntilde;';
+            'Ò' : t:='&Ograve;';
+            'Ó' : t:='&Oacute;';
+            'Ô' : t:='&Ocirc;';
+            'Õ' : t:='&Otilde;';
+            'Ö' : t:='&Ouml;';
+            '×' : t:='&times;';
+            'Ø' : t:='&Oslash;';
+            'Ù' : t:='&Ugrave;';
+            'Ú' : t:='&Uacute;';
+            'Û' : t:='&Ucirc;';
+            'Ü' : t:='&Uuml;';
+            'Ý' : t:='&Yacute;';
+            'Þ' : t:='&THORN;';
+            'ß' : t:='&szlig;';
+            'à' : t:='&agrave;';
+            'á' : t:='&aacute;';
+            'â' : t:='&acirc;';
+            'ã' : t:='&atilde;';
+            'ä' : t:='&auml;';
+            'å' : t:='&aring;';
+            'æ' : t:='&aelig;';
+            'ç' : t:='&ccedil;';
+            'è' : t:='&egrave;';
+            'é' : t:='&eacute;';
+            'ê' : t:='&ecirc;';
+            'ë' : t:='&euml;';
+            'ì' : t:='&igrave;';
+            'í' : t:='&iacute;';
+            'î' : t:='&icirc;';
+            'ï' : t:='&iuml;';
+            'ð' : t:='&eth;';
+            'ñ' : t:='&ntilde;';
+            'ò' : t:='&ograve;';
+            'ó' : t:='&oacute;';
+            'ô' : t:='&ocirc;';
+            'õ' : t:='&otilde;';
+            'ö' : t:='&ouml;';
+            '÷' : t:='&divide;';
+            'ø' : t:='&oslash;';
+            'ù' : t:='&ugrave;';
+            'ú' : t:='&uacute;';
+            'û' : t:='&ucirc;';
+            'ü' : t:='&uuml;';
+            'ý' : t:='&yacute;';
+            'þ' : t:='&thorn;';
+            #255: t:='&yuml;';
+      (*$endif *)
+      (*@\\\000000650C*)
       else  t:=s[i];
       end;
     result:=result+t;
@@ -623,12 +630,12 @@ begin
 
 type
   TMethodPointer = procedure of object;
-(*@///   TMethod = class(TObject)       // Object with just one methodpointer *)
-TMethod = class(TObject)
-public
-  methodpointer: TMethodPointer;
-  end;
-(*@\\\*)
+  (*@/// TMethod = class(TObject)       // Object with just one methodpointer *)
+  TMethod = class(TObject)
+  public
+    methodpointer: TMethodPointer;
+    end;
+  (*@\\\*)
 
 const
 (*$ifndef delphi_ge_3 *)
@@ -701,12 +708,12 @@ function compare_method(proc1,proc2:TMethodpointer):boolean;
 { parameter of the procedure                                           }
 
 type
-(*@///   T_Method=packed record *)
-T_Method=packed record
-  proc: Pointer;
-  self: TObject;
-  end;
-(*@\\\*)
+  (*@/// T_Method=packed record *)
+  T_Method=packed record
+    proc: Pointer;
+    self: TObject;
+    end;
+  (*@\\\*)
 begin
   result:=(T_Method(proc1).proc=T_Method(proc2).proc) and
           (T_Method(proc1).self=T_Method(proc2).self);
@@ -777,19 +784,19 @@ begin
 { messages.                                                                  }
 
 const
-(*@///   UtilWindowClass: TWndClass = (...); *)
-UtilWindowClass: TWndClass = (
-  style: 0;
-  lpfnWndProc: @DefWindowProc;
-  cbClsExtra: 0;
-  cbWndExtra: 0;
-  hInstance: 0;
-  hIcon: 0;
-  hCursor: 0;
-  hbrBackground: 0;
-  lpszMenuName: nil;
-  lpszClassName: 'TAHUtilWindow');
-(*@\\\*)
+  (*@/// UtilWindowClass: TWndClass = (...); *)
+  UtilWindowClass: TWndClass = (
+    style: 0;
+    lpfnWndProc: @DefWindowProc;
+    cbClsExtra: 0;
+    cbWndExtra: 0;
+    hInstance: 0;
+    hIcon: 0;
+    hCursor: 0;
+    hbrBackground: 0;
+    lpszMenuName: nil;
+    lpszClassName: 'TAHUtilWindow');
+  (*@\\\*)
   WndProcs: TObjectList =NIL;
   WndWnds: TList        =NIL;
 
@@ -950,6 +957,92 @@ begin
 (*@\\\0000000C01*)
 (*@\\\0000000301*)
 
+(*@/// Windows Resources and Languages *)
+(*$ifdef delphi_gt_1 *)
+(*@/// function makelangid(language,sublanguage: word):longint; *)
+function makelangid(language,sublanguage: word):longint;
+begin
+  result:=((language and $3FF) or ((sublanguage and $3F) shl 10)) and $FFFF;
+  end;
+(*@\\\*)
+(*@/// function primarylangid(language:word):word; *)
+function primarylangid(language:word):word;
+begin
+  result:=language and $3FF;
+  end;
+(*@\\\*)
+(*@/// function sublangid(language:word):word; *)
+function sublangid(language:word):word;
+begin
+  result:=(language shr 10) and $3F;
+  end;
+(*@\\\*)
+(*@/// function langidfromlcid(lcid:longint):word; *)
+function langidfromlcid(lcid:longint):word;
+begin
+  result:=lcid and $FFFF;
+  end;
+(*@\\\*)
+
+(*@/// function MyLoadStringInternal(Instance: THandle; Id: word; languageid: word):string; *)
+function MyLoadStringInternal(Instance: THandle; Id: word; languageid: word):string;
+var
+  h,h1: THandle;
+  p: ^word;
+  _length: word;
+  i: integer;
+begin
+  h:=FindResourceEx(Instance,rt_string,MakeIntResource((id div 16)+1),languageid);
+  if h<>0 then begin
+    h1:=Loadresource(Instance,h);
+    p:=LockResource(h1);
+    i:=id mod 16;
+    while i>0 do begin
+      _length:=p^;
+      inc(p,_length+1);
+      dec(i);
+      end;
+    _length:=p^;
+    inc(p);
+    setlength(result,WideCharToMultiByte(cp_acp,0,PWideChar(p),_length,NIL,0,NIL,NIL));
+    WideCharToMultiByte(cp_acp,0,PWideChar(p),_length,@result[1],length(result),NIL,NIL);
+    FreeResource(h1);
+    end
+  else
+    result:='';
+  end;
+(*@\\\*)
+(*@/// function MyLoadString(Instance: THandle; Id: word; languageid: word):string; *)
+function MyLoadString(Instance: THandle; Id: word; languageid: word):string;
+begin
+  result:=MyLoadStringInternal(Instance,id,languageid);
+  if result='' then
+    result:=MyLoadStringInternal(Instance,id,makelangid(primarylangid(languageid),sublang_default));
+  if result='' then
+    result:=MyLoadStringInternal(Instance,id,makelangid(primarylangid(languageid),sublang_neutral));
+  if result='' then
+    result:=MyLoadStringInternal(Instance,id,makelangid(lang_neutral,sublang_neutral));
+  end;
+(*@\\\*)
+(*@/// function LoadStrEx(id:word; languageid: word):string; *)
+function LoadStrEx(id:word; languageid: word):string;
+begin
+  result:=MyLoadString(HInstance,id,languageid);
+  end;
+(*@\\\*)
+(*$endif *)
+(*@/// function LoadStr(id:word):string; *)
+function LoadStr(id:word):string;
+begin
+  (*$ifdef delphi_gt_1 *)
+  result:=MyLoadString(HInstance,id,GetUserDefaultLangId);
+  (*$else *)
+  result:=sysutils.loadstr(id);
+  (*$endif *)
+  end;
+(*@\\\003C00050100060100070100080100070B*)
+(*@\\\*)
+
 (*@/// function ScrollBarVisible(control: TWinControl; vertical: boolean):boolean; *)
 function ScrollBarVisible(control: TWinControl; vertical: boolean):boolean;
 (*$ifdef delphi_1 *)
@@ -981,7 +1074,7 @@ begin
     result:=false;
   end;
 (*$endif *)
-(*@\\\003C000101000101000201000201*)
+(*@\\\*)
 
 (*@/// procedure DoneUnit;  // The cleanup of the unit, called in finalization *)
 procedure DoneUnit; far;
@@ -1022,7 +1115,7 @@ begin
   WndWnds:=NIL;
   end;
 (*@\\\*)
-(*@\\\0000001301*)
+(*@\\\0000001101*)
 (*@/// initialization *)
 (*$ifndef delphi_ge_3 *)
 var
@@ -1060,4 +1153,4 @@ finalization
 (*$endif *)
 (*@\\\0000000201*)
 end.
-(*@\\\0003000A01000011000A01*)
+(*@\\\0003000701000011000701*)
