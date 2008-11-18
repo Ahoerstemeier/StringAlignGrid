@@ -1,4 +1,8 @@
-TStringAlignGrid  (Version 1.4 vom 1997-03-07)
+TStringAlignGrid  (Version 1.6 vom 1997-08-20)
+
+Sorry, aus Zeitmangel ist die deutsche Doku nicht mehr up-to-date, also für
+die letzten Aenderungen die englische Doku benutzen...
+
 
 Nachkomme von TStringGrid mit der Möglichkeit, den Zelleninhalt rechts- oder
 linksbündig oder zentriert anzeigen zu lassen. Dieses kann entweder global für
@@ -43,8 +47,8 @@ Ecke des Grids.
 Für Bugreports, Verbesserungsideen, Lob- and Dankesmails etc. bin ich
 zu erreichen unter (neue Anschrift und email!):
 
-ah@scp.de
-andy@farpoint.westend.de
+ah@scp.de             (Firma)
+andy@hoerstemeier.de  (privat)
 http://www.westend.de/~hoerstemeier
 gelbe Post: Andreas Hörstemeier
             Mefferdatisstraße 16-18

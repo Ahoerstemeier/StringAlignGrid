@@ -25,3 +25,21 @@ History of the TStringAlignGrid
                  the respective cell
                  added utility functions like RemoveRow
                  RowMoving and ColMoving now supported correctly
+1997-09-10  1.6  Enhanced Inplace-Edit: may be reset with ESC key, new events
+                 BeforeEdit, AfterEdit, AfterCancel; single cells/rows/columns
+                 can be set to read-only
+                 Contents2CSV and CSV2Contents for ASCII import/export
+                 Contents2HTML for HTML output
+                 now uses brushs for the colors -> works in 256 colors also
+                 allows to change colors for selection on cell/col/row basis
+                 multi line texts (with #13#10 as line break) now supported
+                 caused problems in Delphi 3 as AddExitProc won't work
+                 properly with packages - now fixed
+                 now doesn't let the IDE hints disappear anymore
+
+Maybe in the next version
+                 sorting of rows
+                 import and export to ClipBoard
+                 word wrap
+                 vertically alignments
+                 text rotated by 90 degrees
